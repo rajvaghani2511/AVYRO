@@ -20,6 +20,7 @@ class User(UserMixin, db.Model):
     addresses = db.relationship('Address', backref='user', lazy=True, cascade='all, delete-orphan')
     wishlist_items = db.relationship('Wishlist', backref='user', lazy=True, cascade='all, delete-orphan')
     cart = db.relationship('Cart', backref='user', uselist=False, cascade='all, delete-orphan')
+    reviews = db.relationship('Review', backref='user', lazy=True, cascade='all, delete-orphan')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -86,6 +87,17 @@ class Product(db.Model):
     cart_items = db.relationship('CartItem', backref='product', lazy=True, cascade='all, delete-orphan')
     order_items = db.relationship('OrderItem', backref='product', lazy=True)
     wishlists = db.relationship('Wishlist', backref='product', lazy=True, cascade='all, delete-orphan')
+    reviews = db.relationship('Review', backref='product', lazy=True, cascade='all, delete-orphan', order_by='Review.created_at.desc()')
+
+    @property
+    def review_count(self):
+        return len(self.reviews)
+
+    @property
+    def average_rating(self):
+        if not self.reviews:
+            return 0.0
+        return round(sum(r.rating for r in self.reviews) / len(self.reviews), 1)
 
     @property
     def effective_price(self):
@@ -226,3 +238,20 @@ class Address(db.Model):
     pincode = db.Column(db.String(20), nullable=False)
     country = db.Column(db.String(100), default='India')
     is_default = db.Column(db.Boolean, default=False)
+
+
+class Review(db.Model):
+    __tablename__ = 'reviews'
+
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    reviewer_name = db.Column(db.String(100), nullable=False)
+    rating = db.Column(db.Integer, nullable=False, default=5)
+    title = db.Column(db.String(200), nullable=True)
+    comment = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Review {self.id} for Product {self.product_id} by {self.reviewer_name}>'
+

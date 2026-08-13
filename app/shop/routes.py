@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import current_user
-from app.models import Product, Category, Wishlist, db
+from app.models import Product, Category, Wishlist, Review, db
 
 shop_bp = Blueprint('shop', __name__)
 
@@ -152,6 +152,43 @@ def product_detail(slug):
                            is_in_wishlist=is_in_wishlist)
 
 
+@shop_bp.route('/product/<int:product_id>/review', methods=['POST'])
+def submit_review(product_id):
+    product = Product.query.get_or_404(product_id)
+
+    rating = request.form.get('rating', type=int)
+    comment = request.form.get('comment', '').strip()
+    title = request.form.get('title', '').strip()
+
+    if not rating or rating < 1 or rating > 5:
+        flash('Please select a rating between 1 and 5 stars.', 'warning')
+        return redirect(url_for('shop.product_detail', slug=product.slug) + '#reviews-pane')
+
+    if not comment:
+        flash('Please write a comment for your review.', 'warning')
+        return redirect(url_for('shop.product_detail', slug=product.slug) + '#reviews-pane')
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    if current_user.is_authenticated:
+        reviewer_name = current_user.name
+    else:
+        reviewer_name = request.form.get('reviewer_name', '').strip() or 'Customer'
+
+    review = Review(
+        product_id=product.id,
+        user_id=user_id,
+        reviewer_name=reviewer_name,
+        rating=rating,
+        title=title,
+        comment=comment
+    )
+    db.session.add(review)
+    db.session.commit()
+
+    flash('Thank you! Your review has been submitted successfully.', 'success')
+    return redirect(url_for('shop.product_detail', slug=product.slug) + '#reviews-pane')
+
+
 @shop_bp.route('/api/search')
 def api_search():
     q = request.args.get('q', '').strip()
@@ -174,3 +211,4 @@ def api_search():
             'category': p.category.name if p.category else ''
         })
     return jsonify(results)
+

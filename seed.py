@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app import create_app
 from app.extensions import db
-from app.models import User, Category, Product, ProductImage, Address, Order, OrderItem, Cart, CartItem, Wishlist
+from app.models import User, Category, Product, ProductImage, Address, Order, OrderItem, Cart, CartItem, Wishlist, Review
 
 app = create_app()
 
@@ -495,10 +495,34 @@ def seed_database():
             admin.set_password('Admin@123')
             db.session.add(admin)
 
-        if not User.query.filter_by(email='user@avyro.com').first():
-            user = User(name='Vikramaditya Sharma', email='user@avyro.com', is_admin=False, phone='+91 98765 43210')
-            user.set_password('User@123')
-            db.session.add(user)
+        # Seed initial authentic customer reviews
+        sample_prods = Product.query.limit(2).all()
+        if sample_prods:
+            r1 = Review(
+                product_id=sample_prods[0].id,
+                reviewer_name="Arjun Patel",
+                rating=5,
+                title="Exceptional quality!",
+                comment="The build quality exceeded my expectations. Delivered in pristine packaging within 48 hours."
+            )
+            r2 = Review(
+                product_id=sample_prods[0].id,
+                reviewer_name="Neha Sharma",
+                rating=4,
+                title="Very stylish and functional",
+                comment="The design aesthetic is top tier. Fits into my modern setup seamlessly."
+            )
+            db.session.add_all([r1, r2])
+
+            if len(sample_prods) > 1:
+                r3 = Review(
+                    product_id=sample_prods[1].id,
+                    reviewer_name="Rohan Verma",
+                    rating=5,
+                    title="Must buy product",
+                    comment="Extremely happy with this purchase. Worth every rupee."
+                )
+                db.session.add(r3)
 
         db.session.commit()
 

@@ -50,15 +50,31 @@
 
         <!-- Rating & Reviews -->
         <div class="d-flex align-items-center gap-2 mb-3">
+          {% if product.review_count > 0 %}
           <div class="text-warning small">
-            <i class="bi bi-star-fill"></i>
-            <i class="bi bi-star-fill"></i>
-            <i class="bi bi-star-fill"></i>
-            <i class="bi bi-star-fill"></i>
-            <i class="bi bi-star-fill"></i>
+            {% for i in range(1, 6) %}
+              {% if product.average_rating >= i %}
+                <i class="bi bi-star-fill"></i>
+              {% elif product.average_rating >= i - 0.5 %}
+                <i class="bi bi-star-half"></i>
+              {% else %}
+                <i class="bi bi-star"></i>
+              {% endif %}
+            {% endfor %}
           </div>
-          <span class="fw-bold small font-serif">4.9 / 5.0</span>
-          <span class="text-muted small">(48 Customer Reviews)</span>
+          <span class="fw-bold small font-serif">{{ "%.1f"|format(product.average_rating) }} / 5.0</span>
+          <a href="#reviews-pane" onclick="document.getElementById('reviews-tab').click();" class="text-muted small text-decoration-none">({{ product.review_count }} Customer Review{% if product.review_count != 1 %}s{% endif %})</a>
+          {% else %}
+          <div class="text-muted small">
+            <i class="bi bi-star"></i>
+            <i class="bi bi-star"></i>
+            <i class="bi bi-star"></i>
+            <i class="bi bi-star"></i>
+            <i class="bi bi-star"></i>
+          </div>
+          <span class="text-muted small font-serif">No reviews yet</span>
+          <a href="#reviews-pane" onclick="document.getElementById('reviews-tab').click();" class="text-primary small text-decoration-none ms-1">Be the first to review!</a>
+          {% endif %}
         </div>
 
         <!-- Pricing Block -->
@@ -150,7 +166,7 @@
             <button class="nav-link font-serif fs-5 fw-bold text-dark" id="specs-tab" data-bs-toggle="tab" data-bs-target="#specs-pane">Specifications</button>
           </li>
           <li class="nav-item">
-            <button class="nav-link font-serif fs-5 fw-bold text-dark" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews-pane">Customer Reviews (48)</button>
+            <button class="nav-link font-serif fs-5 fw-bold text-dark" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews-pane">Customer Reviews ({{ product.review_count }})</button>
           </li>
         </ul>
 
@@ -193,35 +209,115 @@
           <!-- Reviews Tab -->
           <div class="tab-pane fade" id="reviews-pane">
             <div class="row g-4">
-              <div class="col-md-4 text-center border-end">
-                <h1 class="display-3 fw-bold text-primary font-serif">4.9</h1>
-                <div class="text-warning mb-2">
-                  <i class="bi bi-star-fill"></i>
-                  <i class="bi bi-star-fill"></i>
-                  <i class="bi bi-star-fill"></i>
-                  <i class="bi bi-star-fill"></i>
-                  <i class="bi bi-star-fill"></i>
+              <!-- Rating Summary Sidebar -->
+              <div class="col-lg-4 text-center border-end pe-lg-4">
+                <div class="p-3 bg-light radius-md mb-4">
+                  <h1 class="display-3 fw-bold text-primary font-serif mb-0">
+                    {% if product.review_count > 0 %}
+                      {{ "%.1f"|format(product.average_rating) }}
+                    {% else %}
+                      0.0
+                    {% endif %}
+                  </h1>
+                  <div class="text-warning my-2">
+                    {% for i in range(1, 6) %}
+                      {% if product.average_rating >= i %}
+                        <i class="bi bi-star-fill"></i>
+                      {% elif product.average_rating >= i - 0.5 %}
+                        <i class="bi bi-star-half"></i>
+                      {% else %}
+                        <i class="bi bi-star"></i>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                  <p class="text-muted small mb-0">
+                    {% if product.review_count > 0 %}
+                      Based on {{ product.review_count }} customer rating{% if product.review_count != 1 %}s{% endif %}
+                    {% else %}
+                      No customer ratings yet
+                    {% endif %}
+                  </p>
                 </div>
-                <p class="text-muted small">Based on 48 verified customer ratings</p>
               </div>
 
-              <div class="col-md-8">
-                <div class="border-bottom pb-3 mb-3">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <strong class="text-dark font-serif">Arjun V.</strong>
-                    <span class="text-muted extra-small">2 days ago</span>
-                  </div>
-                  <div class="text-warning small mb-1"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
-                  <p class="text-secondary small mb-0">Exceptional build quality. Delivered in pristine packaging within 48 hours!</p>
+              <!-- Reviews List & Submission Form -->
+              <div class="col-lg-8 ps-lg-4">
+                <!-- Submit Review Form Card -->
+                <div class="card border-0 bg-sand p-4 radius-md mb-4 shadow-sm">
+                  <h5 class="font-serif fw-bold text-dark mb-3"><i class="bi bi-pencil-square me-2"></i>Write a Customer Review</h5>
+                  <form action="{{ url_for('shop.submit_review', product_id=product.id) }}" method="POST">
+                    {% if not current_user.is_authenticated %}
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold text-dark">Your Name</label>
+                      <input type="text" name="reviewer_name" class="form-control" placeholder="Enter your full name" required>
+                    </div>
+                    {% else %}
+                    <div class="mb-3 text-muted small">
+                      Reviewing as: <strong class="text-dark">{{ current_user.name }}</strong>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold text-dark d-block">Select Rating</label>
+                      <div class="btn-group" role="group" aria-label="Rating selector">
+                        {% for star in range(5, 0, -1) %}
+                        <input type="radio" class="btn-check" name="rating" id="star{{ star }}" value="{{ star }}" {% if star == 5 %}checked{% endif %} required>
+                        <label class="btn btn-outline-warning btn-sm" for="star{{ star }}">
+                          {{ star }} <i class="bi bi-star-fill"></i>
+                        </label>
+                        {% endfor %}
+                      </div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold text-dark">Review Title (Optional)</label>
+                      <input type="text" name="title" class="form-control" placeholder="Summarize your opinion (e.g. Excellent Quality!)">
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold text-dark">Your Review</label>
+                      <textarea name="comment" class="form-control" rows="3" placeholder="Share details of your experience with this product..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-avyro btn-avyro-maroon px-4 py-2">
+                      <i class="bi bi-send me-1"></i> Submit Review
+                    </button>
+                  </form>
                 </div>
-                <div>
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <strong class="text-dark font-serif">Neha Sharma</strong>
-                    <span class="text-muted extra-small">1 week ago</span>
+
+                <!-- Existing Customer Reviews List -->
+                <h5 class="font-serif fw-bold text-dark mb-3">Customer Reviews</h5>
+
+                {% if product.reviews %}
+                  <div class="review-list">
+                    {% for review in product.reviews %}
+                    <div class="border-bottom pb-3 mb-3">
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong class="text-dark font-serif">{{ review.reviewer_name }}</strong>
+                        <span class="text-muted extra-small">{{ review.created_at.strftime('%b %d, %Y') }}</span>
+                      </div>
+                      <div class="text-warning small mb-1">
+                        {% for i in range(1, 6) %}
+                          {% if review.rating >= i %}
+                            <i class="bi bi-star-fill"></i>
+                          {% else %}
+                            <i class="bi bi-star text-muted"></i>
+                          {% endif %}
+                        {% endfor %}
+                      </div>
+                      {% if review.title %}
+                      <h6 class="fw-bold text-dark mb-1 small">{{ review.title }}</h6>
+                      {% endif %}
+                      <p class="text-secondary small mb-0">{{ review.comment }}</p>
+                    </div>
+                    {% endfor %}
                   </div>
-                  <div class="text-warning small mb-1"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
-                  <p class="text-secondary small mb-0">The AVYRO design aesthetic is top tier. Fits into my modern desk setup seamlessly.</p>
-                </div>
+                {% else %}
+                  <div class="text-center py-4 text-muted bg-light radius-md">
+                    <i class="bi bi-chat-left-text fs-1 text-secondary d-block mb-2"></i>
+                    <p class="mb-0 small">No reviews written for this product yet.</p>
+                  </div>
+                {% endif %}
               </div>
             </div>
           </div>
