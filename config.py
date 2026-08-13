@@ -7,8 +7,13 @@ class Config:
 
     # Database URI configuration for local vs Vercel / Remote DB
     db_url = os.environ.get('DATABASE_URL')
+
     if db_url and db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+    # On Vercel, ignore localhost / 127.0.0.1 database URLs because cloud functions cannot reach local laptops
+    if os.environ.get('VERCEL') and db_url and ('localhost' in db_url or '127.0.0.1' in db_url):
+        db_url = None
 
     if db_url:
         SQLALCHEMY_DATABASE_URI = db_url
