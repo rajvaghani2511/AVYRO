@@ -6,30 +6,30 @@
 {% block content %}
 
 <div class="mb-3">
-  <a href="{{ url_for('admin.products') }}" class="text-primary small fw-semibold">&larr; Back to Products List</a>
+  <a href="{{ url_for('admin.products') }}" class="text-primary small fw-semibold">&larr; Back to Products Catalog</a>
 </div>
 
 <form action="{% if product %}{{ url_for('admin.edit_product', id=product.id) }}{% else %}{{ url_for('admin.add_product') }}{% endif %}" method="POST" enctype="multipart/form-data">
   <div class="row g-4">
-    <!-- Left Column: Product Info & Images -->
+    <!-- Left Column: Product Details & Images -->
     <div class="col-lg-8">
-      <!-- Card 1: Product Information -->
+      <!-- Card 1: Product Basic Information -->
       <div class="card border-0 shadow-sm radius-lg p-4 mb-4 bg-white">
         <h6 class="font-serif fw-bold mb-3 border-bottom pb-2 fs-5">1. General Product Information</h6>
 
         <div class="row g-3">
           <div class="col-12">
             <label class="form-label small fw-semibold">Product Name *</label>
-            <input type="text" name="name" class="form-control" value="{% if product %}{{ product.name }}{% endif %}" placeholder="e.g. AVYRO Studio Wireless Headphones Pro" required>
+            <input type="text" name="name" class="form-control" value="{% if product %}{{ product.name }}{% endif %}" placeholder="e.g. AVYRO Stainless Steel Oil Dispenser & Sprayer (1000ml)" required>
           </div>
 
           <div class="col-md-6">
             <label class="form-label small fw-semibold">SKU (Stock Keeping Unit) *</label>
-            <input type="text" name="sku" class="form-control font-monospace" value="{% if product %}{{ product.sku }}{% endif %}" placeholder="AVY-AUD-001" required>
+            <input type="text" name="sku" class="form-control font-monospace" value="{% if product %}{{ product.sku }}{% endif %}" placeholder="e.g. AVY-HK-001" required>
           </div>
 
           <div class="col-md-6">
-            <label class="form-label small fw-semibold">Category *</label>
+            <label class="form-label small fw-semibold">Category / Subcategory *</label>
             <select name="category_id" class="form-select" required>
               <option value="">Select Category / Subcategory...</option>
               {% for cat in categories %}
@@ -49,7 +49,7 @@
 
           <div class="col-md-6">
             <label class="form-label small fw-semibold">Brand</label>
-            <input type="text" name="brand" class="form-control" value="{% if product %}{{ product.brand }}{% else %}AVYRO{% endif %}">
+            <input type="text" name="brand" class="form-control" value="{% if product %}{{ product.brand }}{% else %}AVYRO Home{% endif %}">
           </div>
 
           <div class="col-md-6">
@@ -58,54 +58,91 @@
           </div>
 
           <div class="col-12">
-            <label class="form-label small fw-semibold">Short Summary / Tagline</label>
-            <input type="text" name="short_description" class="form-control" value="{% if product %}{{ product.short_description or '' }}{% endif %}" placeholder="High precision wireless audio with active noise cancellation.">
+            <label class="form-label small fw-semibold">Short Tagline Summary</label>
+            <input type="text" name="short_description" class="form-control" value="{% if product %}{{ product.short_description or '' }}{% endif %}" placeholder="e.g. Leak-proof 1000ml stainless steel oil dispenser with anti-drip spout.">
           </div>
 
+          <!-- Detailed Description with Markdown Toolbar -->
           <div class="col-12">
-            <label class="form-label small fw-semibold">Detailed Description *</label>
-            <textarea name="description" class="form-control" rows="6" placeholder="Describe item features, materials, and warranty..." required>{% if product %}{{ product.description }}{% endif %}</textarea>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label class="form-label small fw-semibold mb-0">Detailed Description (Markdown Supported) *</label>
+              
+              <!-- Markdown Tabs -->
+              <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-dark active" id="btnWriteTab">Write</button>
+                <button type="button" class="btn btn-outline-dark" id="btnPreviewTab">Preview</button>
+              </div>
+            </div>
+
+            <!-- Markdown Toolbar -->
+            <div class="bg-light p-2 border rounded-top border-bottom-0 d-flex flex-wrap gap-1 align-items-center">
+              <button type="button" class="btn btn-sm btn-white border px-2 py-0 extra-small fw-bold" onclick="insertMarkdown('**', '**')" title="Bold">B</button>
+              <button type="button" class="btn btn-sm btn-white border px-2 py-0 extra-small fst-italic" onclick="insertMarkdown('*', '*')" title="Italic">I</button>
+              <button type="button" class="btn btn-sm btn-white border px-2 py-0 extra-small" onclick="insertMarkdown('## ')" title="Heading 2">H2</button>
+              <button type="button" class="btn btn-sm btn-white border px-2 py-0 extra-small" onclick="insertMarkdown('### ')" title="Heading 3">H3</button>
+              <button type="button" class="btn btn-sm btn-white border px-2 py-0 extra-small" onclick="insertMarkdown('* ')" title="Bullet List">• List</button>
+              <button type="button" class="btn btn-sm btn-white border px-2 py-0 extra-small" onclick="insertMarkdown('> ')" title="Quote">Quote</button>
+              <button type="button" class="btn btn-sm btn-white border px-2 py-0 extra-small" onclick="insertMarkdown('`', '`')" title="Code">Code</button>
+            </div>
+
+            <!-- Textarea -->
+            <textarea name="description" id="productDescription" class="form-control rounded-top-0" rows="7" placeholder="Describe item specifications, materials, features, care instructions..." required>{% if product %}{{ product.description }}{% endif %}</textarea>
+            
+            <!-- Live Preview Container -->
+            <div id="markdownPreview" class="d-none min-vh-10 border rounded-bottom bg-white p-3"></div>
+            <span class="extra-small text-muted mt-1 d-block">Supports Markdown: Use `**bold**`, `## Heading`, `* Bullet items`.</span>
           </div>
         </div>
       </div>
 
-      <!-- Card 2: Specifications -->
+      <!-- Card 2: Technical Specifications -->
       <div class="card border-0 shadow-sm radius-lg p-4 mb-4 bg-white">
-        <h6 class="font-serif fw-bold mb-3 border-bottom pb-2 fs-5">2. Technical Specifications</h6>
+        <h6 class="font-serif fw-bold mb-3 border-bottom pb-2 fs-5">2. Specifications & Dimensions</h6>
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label small fw-semibold">Weight</label>
-            <input type="text" name="weight" class="form-control" value="{% if product %}{{ product.weight or '' }}{% endif %}" placeholder="e.g. 260 grams">
+            <input type="text" name="weight" class="form-control" value="{% if product %}{{ product.weight or '' }}{% endif %}" placeholder="e.g. 320g">
           </div>
           <div class="col-md-6">
             <label class="form-label small fw-semibold">Dimensions</label>
-            <input type="text" name="dimensions" class="form-control" value="{% if product %}{{ product.dimensions or '' }}{% endif %}" placeholder="e.g. 19 x 17 x 8 cm">
+            <input type="text" name="dimensions" class="form-control" value="{% if product %}{{ product.dimensions or '' }}{% endif %}" placeholder="e.g. 24 x 8 x 8 cm">
           </div>
         </div>
       </div>
 
-      <!-- Card 3: Images Gallery -->
+      <!-- Card 3: Multi-Image Drag & Drop Upload Zone -->
       <div class="card border-0 shadow-sm radius-lg p-4 bg-white">
-        <h6 class="font-serif fw-bold mb-3 border-bottom pb-2 fs-5">3. Product Images Upload</h6>
-
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">Upload Product Images (Select one or multiple files)</label>
-          <input type="file" name="images" id="productImageInput" class="form-control" multiple accept="image/*">
-          <span class="extra-small text-muted">Supported formats: WEBP, JPG, PNG. First uploaded image will act as main cover.</span>
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+          <h6 class="font-serif fw-bold mb-0 fs-5">3. Product Images Upload</h6>
+          <span class="badge bg-primary radius-pill extra-small" id="selectedFilesCounter"></span>
         </div>
 
-        <div id="imagePreviewContainer" class="row g-2 mb-3"></div>
+        <!-- Drag & Drop Dropzone Box -->
+        <div class="p-4 border-2 border-dashed rounded text-center bg-sand cursor-pointer transition-all mb-3" id="uploadDropzone" onclick="document.getElementById('productImageInput').click();">
+          <i class="bi bi-cloud-arrow-up display-5 text-primary mb-2 d-block"></i>
+          <h6 class="font-serif fw-bold mb-1">Drag & Drop Multiple Images Here</h6>
+          <p class="text-muted extra-small mb-2">or click to browse your computer files</p>
+          <span class="badge bg-dark text-white px-3 py-1 radius-pill extra-small">Supports WEBP, JPG, PNG (Select 1 or Multiple Files)</span>
+          <input type="file" name="images" id="productImageInput" class="d-none" multiple accept="image/*">
+        </div>
 
+        <!-- New Image Live Thumbnails Grid -->
+        <div id="imagePreviewContainer" class="row g-3 mb-3"></div>
+
+        <!-- Already Uploaded Product Images -->
         {% if product and product.images %}
-        <h6 class="small fw-bold text-muted mt-3 mb-2">Uploaded Images ({{ product.images|length }})</h6>
+        <h6 class="small fw-bold text-dark mt-4 mb-2 border-top pt-3">Existing Uploaded Images ({{ product.images|length }})</h6>
         <div class="row g-3">
           {% for img in product.images %}
-          <div class="col-4 col-md-3">
-            <div class="border rounded p-1 position-relative bg-light">
-              <img src="{{ img.image_path | img_url }}" class="rounded w-100" style="height: 100px; object-fit: cover;">
+          <div class="col-6 col-sm-4 col-md-3">
+            <div class="border rounded p-1 position-relative bg-white shadow-sm text-center">
+              <div style="height: 100px; overflow: hidden;" class="rounded mb-1">
+                <img src="{{ img.image_path | img_url }}" class="w-100 h-100" style="object-fit: cover;">
+              </div>
               <form action="{{ url_for('admin.delete_product_image', image_id=img.id) }}" method="POST" class="position-absolute top-0 end-0 m-1">
                 <button type="submit" class="btn btn-sm btn-danger py-0 px-1 extra-small radius-pill" title="Delete Image">&times;</button>
               </form>
+              <span class="extra-small text-muted">Image #{{ loop.index }}</span>
             </div>
           </div>
           {% endfor %}
@@ -121,22 +158,22 @@
 
         <div class="mb-3">
           <label class="form-label small fw-semibold">Regular Price (₹) *</label>
-          <input type="number" step="0.01" name="price" class="form-control" value="{% if product %}{{ product.price }}{% endif %}" placeholder="2999.00" required>
+          <input type="number" step="0.01" name="price" class="form-control form-control-lg font-serif fw-bold" value="{% if product %}{{ product.price }}{% endif %}" placeholder="899.00" required>
         </div>
 
         <div class="mb-4">
           <label class="form-label small fw-semibold">Sale / Discount Price (₹)</label>
-          <input type="number" step="0.01" name="sale_price" class="form-control" value="{% if product %}{{ product.sale_price or '' }}{% endif %}" placeholder="1999.00">
+          <input type="number" step="0.01" name="sale_price" class="form-control font-serif" value="{% if product %}{{ product.sale_price or '' }}{% endif %}" placeholder="549.00">
           <span class="extra-small text-muted">Leave blank if no discount applies.</span>
         </div>
 
         <hr class="my-3">
 
-        <h6 class="font-serif fw-bold mb-3">Badges & Visibility</h6>
+        <h6 class="font-serif fw-bold mb-3">Badges & Catalog Visibility</h6>
 
         <div class="form-check mb-2">
           <input class="form-check-input" type="checkbox" name="status" value="1" id="statusCheck" {% if not product or product.status %}checked{% endif %}>
-          <label class="form-check-label small fw-semibold" for="statusCheck">Active (Visible in Store Catalog)</label>
+          <label class="form-check-label small fw-semibold" for="statusCheck">Active (Visible in Storefront)</label>
         </div>
 
         <div class="form-check mb-2">
@@ -149,8 +186,8 @@
           <label class="form-check-label small fw-semibold" for="bestCheck">Bestseller Badge</label>
         </div>
 
-        <button type="submit" class="btn btn-avyro btn-avyro-maroon w-100 py-3 font-serif fw-bold">
-          {% if product %}SAVE PRODUCT CHANGES{% else %}PUBLISH NEW PRODUCT{% endif %}
+        <button type="submit" class="btn btn-avyro btn-avyro-maroon w-100 py-3 font-serif fw-bold fs-6">
+          {% if product %}SAVE PRODUCT CHANGES{% else %}PUBLISH NEW PRODUCT{% endif %} &rarr;
         </button>
       </div>
     </div>

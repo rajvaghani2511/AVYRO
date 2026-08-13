@@ -875,3 +875,20 @@ a:hover {
   color: var(--avyro-brass);
   padding-left: 4px;
 }
+
+/* Drag & Drop Multi-Image Upload Zone */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+#uploadDropzone {
+  border: 2px dashed var(--avyro-brass) !important;
+  background-color: var(--avyro-sand) !important;
+  transition: all 0.3s ease;
+}
+
+#uploadDropzone:hover, #uploadDropzone.drag-active {
+  background-color: #f0e6d6 !important;
+  border-color: var(--avyro-maroon) !important;
+  transform: scale(1.01);
+}
