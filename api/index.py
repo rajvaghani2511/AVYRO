@@ -1,8 +1,10 @@
 import sys
 import os
 
-# Add root directory to python module search path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Add root directory to python search path
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
 from app import create_app
 from app.extensions import db
@@ -10,18 +12,12 @@ from app.models import User, Category, Product, ProductImage
 
 app = create_app()
 
-def auto_seed_if_empty():
-    with app.app_context():
+# Initialize database schema safely without blocking network requests
+with app.app_context():
+    try:
         db.create_all()
-        # Seed default admin if missing
-        if not User.query.filter_by(email='admin@avyro.com').first():
-            try:
-                from seed import seed_database
-                seed_database()
-            except Exception as e:
-                print(f"Auto-seed warning: {e}")
+    except Exception as e:
+        print(f"Database init warning: {e}")
 
-auto_seed_if_empty()
-
-# Vercel WSGI Handler
-handler = app
+# Vercel WSGI entry point
+app = app
