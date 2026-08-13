@@ -13,12 +13,40 @@ app = create_app()
 
 _db_initialized = False
 
+def sync_db_columns():
+    try:
+        from sqlalchemy import inspect, text
+        inspector = inspect(db.engine)
+        db_tables = inspector.get_table_names()
+        for table_name, table in db.metadata.tables.items():
+            if table_name in db_tables:
+                existing_cols = {c['name'] for c in inspector.get_columns(table_name)}
+                for col in table.columns:
+                    if col.name not in existing_cols:
+                        col_type = col.type.compile(db.engine.dialect)
+                        nullable = "NULL" if col.nullable else "NOT NULL"
+                        default = ""
+                        if col.default is not None and col.default.arg is not None:
+                            if isinstance(col.default.arg, bool):
+                                default = f" DEFAULT {'TRUE' if col.default.arg else 'FALSE'}"
+                            elif isinstance(col.default.arg, (int, float)):
+                                default = f" DEFAULT {col.default.arg}"
+                            elif isinstance(col.default.arg, str):
+                                default = f" DEFAULT '{col.default.arg}'"
+                        sql = f'ALTER TABLE "{table_name}" ADD COLUMN "{col.name}" {col_type}{default} {nullable};'
+                        db.session.execute(text(sql))
+                        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Auto Column Sync Notice: {e}")
+
 @app.before_request
 def ensure_db_initialized():
     global _db_initialized
     if not _db_initialized:
         try:
             db.create_all()
+            sync_db_columns()
             from app.models import Category, User
             try:
                 if not Category.query.first():
