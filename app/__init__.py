@@ -39,22 +39,25 @@ def create_app(config_class=Config):
         from flask_login import current_user
         from app.models import Category, Cart, CartItem, Wishlist
 
-        categories = Category.query.filter_by(status=True, parent_id=None).all()
+        categories = []
         cart_count = 0
         wishlist_count = 0
 
-        # Calculate Cart Count
-        if current_user.is_authenticated:
-            user_cart = Cart.query.filter_by(user_id=current_user.id).first()
-            if user_cart:
-                cart_count = user_cart.total_items
-            wishlist_count = Wishlist.query.filter_by(user_id=current_user.id).count()
-        else:
-            session_id = session.get('cart_session_id')
-            if session_id:
-                guest_cart = Cart.query.filter_by(session_id=session_id).first()
-                if guest_cart:
-                    cart_count = guest_cart.total_items
+        try:
+            categories = Category.query.filter_by(status=True, parent_id=None).all()
+            if current_user.is_authenticated:
+                user_cart = Cart.query.filter_by(user_id=current_user.id).first()
+                if user_cart:
+                    cart_count = user_cart.total_items
+                wishlist_count = Wishlist.query.filter_by(user_id=current_user.id).count()
+            else:
+                session_id = session.get('cart_session_id')
+                if session_id:
+                    guest_cart = Cart.query.filter_by(session_id=session_id).first()
+                    if guest_cart:
+                        cart_count = guest_cart.total_items
+        except Exception as e:
+            print(f"Global Context Processor Notice: {e}")
 
         return {
             'global_categories': categories,
