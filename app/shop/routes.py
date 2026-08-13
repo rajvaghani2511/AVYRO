@@ -51,7 +51,9 @@ def products():
     if category_slug:
         selected_category = Category.query.filter_by(slug=category_slug).first()
         if selected_category:
-            query = query.filter_by(category_id=selected_category.id)
+            sub_ids = [sub.id for sub in selected_category.subcategories]
+            cat_ids = [selected_category.id] + sub_ids
+            query = query.filter(Product.category_id.in_(cat_ids))
 
     # Price filters
     if min_price is not None:
@@ -76,7 +78,7 @@ def products():
     pagination = query.paginate(page=page, per_page=12, error_out=False)
     products_list = pagination.items
 
-    categories = Category.query.filter_by(status=True).all()
+    categories = Category.query.filter_by(status=True, parent_id=None).all()
 
     user_wishlist_ids = set()
     if current_user.is_authenticated:
@@ -98,14 +100,13 @@ def products():
 @shop_bp.route('/category/<slug>')
 def category_view(slug):
     category = Category.query.filter_by(slug=slug, status=True).first_or_404()
-    return products_route_with_category(category)
+    sub_ids = [sub.id for sub in category.subcategories]
+    cat_ids = [category.id] + sub_ids
 
-def products_route_with_category(category):
-    # Delegate to products with pre-selected category
     page = request.args.get('page', 1, type=int)
     sort_by = request.args.get('sort', 'newest')
 
-    query = Product.query.filter_by(status=True, category_id=category.id)
+    query = Product.query.filter(Product.status == True, Product.category_id.in_(cat_ids))
     if sort_by == 'price_asc':
         query = query.order_by(Product.price.asc())
     elif sort_by == 'price_desc':

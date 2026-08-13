@@ -53,14 +53,14 @@
           </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-              Collections
+              Home & Kitchen
             </a>
             <ul class="dropdown-menu border-0 shadow-lg radius-md py-2 bg-white">
               {% for cat in global_categories %}
               <li><a class="dropdown-item py-2 px-3 small font-serif fs-6" href="{{ url_for('shop.category_view', slug=cat.slug) }}">{{ cat.name }}</a></li>
               {% endfor %}
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item py-2 px-3 small fw-bold text-primary" href="{{ url_for('shop.products') }}">Explore All Collections &rarr;</a></li>
+              <li><a class="dropdown-item py-2 px-3 small fw-bold text-primary" href="{{ url_for('shop.products') }}">Explore All Home & Kitchen &rarr;</a></li>
             </ul>
           </li>
           <li class="nav-item">

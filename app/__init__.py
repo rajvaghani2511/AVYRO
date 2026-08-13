@@ -39,7 +39,7 @@ def create_app(config_class=Config):
         from flask_login import current_user
         from app.models import Category, Cart, CartItem, Wishlist
 
-        categories = Category.query.filter_by(status=True).all()
+        categories = Category.query.filter_by(status=True, parent_id=None).all()
         cart_count = 0
         wishlist_count = 0
 

@@ -31,9 +31,18 @@
           <div class="col-md-6">
             <label class="form-label small fw-semibold">Category *</label>
             <select name="category_id" class="form-select" required>
-              <option value="">Select Category...</option>
+              <option value="">Select Category / Subcategory...</option>
               {% for cat in categories %}
-              <option value="{{ cat.id }}" {% if product and product.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                {% if not cat.parent_id %}
+                <optgroup label="{{ cat.name }}">
+                  <option value="{{ cat.id }}" {% if product and product.category_id == cat.id %}selected{% endif %}>{{ cat.name }} (Main Category)</option>
+                  {% for sub in cat.subcategories %}
+                  <option value="{{ sub.id }}" {% if product and product.category_id == sub.id %}selected{% endif %}>&nbsp;&nbsp;↳ {{ sub.name }}</option>
+                  {% endfor %}
+                </optgroup>
+                {% else %}
+                <option value="{{ cat.id }}" {% if product and product.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                {% endif %}
               {% endfor %}
             </select>
           </div>

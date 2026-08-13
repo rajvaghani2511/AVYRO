@@ -57,13 +57,22 @@
                 <label class="form-check-label small font-serif" for="cat_all">All Collections</label>
               </div>
               {% for cat in categories %}
-              <div class="form-check">
+              <div class="form-check mt-1">
                 <input class="form-check-input" type="radio" name="category" value="{{ cat.slug }}" id="cat_{{ cat.id }}" {% if selected_category and selected_category.slug == cat.slug %}checked{% endif %} onchange="this.form.submit()">
-                <label class="form-check-label small font-serif d-flex justify-content-between align-items-center" for="cat_{{ cat.id }}">
+                <label class="form-check-label small font-serif fw-bold text-dark d-flex justify-content-between align-items-center" for="cat_{{ cat.id }}">
                   <span>{{ cat.name }}</span>
-                  <span class="badge bg-light text-dark border radius-pill">{{ cat.products|length }}</span>
                 </label>
               </div>
+              {% if cat.subcategories %}
+              <div class="ps-3 d-flex flex-column gap-1 my-1">
+                {% for sub in cat.subcategories %}
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="category" value="{{ sub.slug }}" id="cat_{{ sub.id }}" {% if selected_category and selected_category.slug == sub.slug %}checked{% endif %} onchange="this.form.submit()">
+                  <label class="form-check-label extra-small text-muted" for="cat_{{ sub.id }}">{{ sub.name }}</label>
+                </div>
+                {% endfor %}
+              </div>
+              {% endif %}
               {% endfor %}
             </div>
           </div>
