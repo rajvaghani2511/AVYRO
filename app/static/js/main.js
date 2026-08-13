@@ -7,7 +7,21 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearchOverlay();
   initProductGallery();
   initQuantityControls();
+  initAnnouncementRotator();
 });
+
+// Announcement Rotator
+function initAnnouncementRotator() {
+  const slides = document.querySelectorAll('.announcement-slide');
+  if (slides.length <= 1) return;
+
+  let currentIndex = 0;
+  setInterval(() => {
+    slides[currentIndex].classList.remove('active');
+    currentIndex = (currentIndex + 1) % slides.length;
+    slides[currentIndex].classList.add('active');
+  }, 4000);
+}
 
 // Toast Notification System
 function showToast(message, type = 'info') {

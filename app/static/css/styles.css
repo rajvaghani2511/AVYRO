@@ -117,15 +117,72 @@ a:hover {
 
 /* Announcement Top Strip */
 .top-announcement-strip {
-  background: var(--avyro-maroon);
+  background: var(--avyro-maroon-dark);
   color: var(--avyro-sand);
   font-size: 0.76rem;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  padding: 7px 0;
+  padding: 8px 16px;
   text-align: center;
-  border-bottom: 1px solid rgba(176, 138, 74, 0.3);
+  border-bottom: 1px solid rgba(176, 138, 74, 0.35);
+  position: relative;
+  overflow: hidden;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.top-announcement-strip .text-brass {
+  color: var(--avyro-brass);
+}
+
+.top-announcement-strip .accent-dot {
+  color: var(--avyro-brass);
+  margin: 0 8px;
+}
+
+.announcement-slider {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.announcement-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.announcement-slide.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+@media (max-width: 576px) {
+  .top-announcement-strip {
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    padding: 6px 8px;
+  }
+  .top-announcement-strip .accent-dot {
+    margin: 0 4px;
+  }
 }
 
 /* AVYRO Logo Branding */
