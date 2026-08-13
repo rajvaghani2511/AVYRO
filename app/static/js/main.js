@@ -127,12 +127,17 @@ function initSearchOverlay() {
               
               return `
                 <a href="/product/${item.slug}" class="search-result-item" onclick="closeSearchOverlay()">
-                  <img src="${imgSrc}" class="search-result-img" alt="${item.name}" onerror="this.src='/static/uploads/default-product.webp'">
-                  <div class="flex-grow-1 overflow-hidden">
-                    <div class="fw-bold font-serif fs-6 text-dark text-truncate">${item.name}</div>
-                    <div class="text-muted extra-small">${item.category || 'AVYRO Collection'}</div>
+                  <div class="search-result-thumb-wrap">
+                    <img src="${imgSrc}" class="search-result-img" alt="${item.name}" onerror="this.src='/static/uploads/default-product.webp'">
                   </div>
-                  <div class="fw-bold text-primary font-serif">${priceVal}</div>
+                  <div class="flex-grow-1 min-w-0 me-2">
+                    <div class="fw-bold font-serif fs-6 text-dark text-truncate mb-1" title="${item.name}">${item.name}</div>
+                    <div class="text-muted extra-small text-uppercase letter-spacing-1 mb-1">${item.category || 'AVYRO Collection'}</div>
+                    <div class="fw-bold text-primary font-serif fs-6">${priceVal}</div>
+                  </div>
+                  <div class="text-muted extra-small font-serif d-none d-sm-block">
+                    <span class="btn btn-sm btn-outline-dark px-3 py-1 radius-pill extra-small">View &rarr;</span>
+                  </div>
                 </a>
               `;
             }).join('');
