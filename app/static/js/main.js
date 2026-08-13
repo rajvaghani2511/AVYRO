@@ -195,8 +195,20 @@ function initQuantityControls() {
   });
 }
 
-// Global Add to Cart Function
-function addToCart(productId, quantity = 1) {
+// Global Add to Cart Function with Fly-to-Cart Animation
+function addToCart(productId, quantity = 1, btnElement = null) {
+  let triggerElem = btnElement;
+  if (!triggerElem && typeof window !== 'undefined' && window.event) {
+    triggerElem = window.event.currentTarget || window.event.target;
+  }
+
+  // Trigger smooth curved fly-to-cart visual animation immediately
+  try {
+    triggerFlyToCartAnimation(triggerElem);
+  } catch (err) {
+    console.error('Fly-to-cart animation notice:', err);
+  }
+
   fetch('/api/cart/add', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -218,6 +230,125 @@ function addToCart(productId, quantity = 1) {
     showToast('Failed to connect to server', 'danger');
   });
 }
+
+// Smooth & Premium Fly-To-Cart Curved Path Animation
+function triggerFlyToCartAnimation(triggerElem) {
+  const cartTarget = document.getElementById('navCartIconBtn') || 
+                     document.querySelector('.cart-badge-count') || 
+                     document.querySelector('a[href*="/cart"]');
+  if (!cartTarget) return;
+
+  // Locate the product image source element
+  let imgElem = null;
+  if (triggerElem && triggerElem.closest) {
+    const container = triggerElem.closest('.product-card') || 
+                      triggerElem.closest('.product-gallery-main') || 
+                      triggerElem.closest('.row') || 
+                      triggerElem.closest('tr');
+    if (container) {
+      imgElem = container.querySelector('.product-card-img-wrap img') || 
+                container.querySelector('#mainGalleryImage') || 
+                container.querySelector('.product-gallery-main img') || 
+                container.querySelector('img');
+    }
+  }
+
+  if (!imgElem) {
+    imgElem = document.getElementById('mainGalleryImage') || 
+              document.querySelector('.product-card-img-wrap img');
+  }
+
+  const targetRect = cartTarget.getBoundingClientRect();
+  const targetX = targetRect.left + targetRect.width / 2;
+  const targetY = targetRect.top + targetRect.height / 2;
+
+  let startCenterX, startCenterY, startWidth, startHeight, flyerNode;
+
+  if (imgElem && imgElem.offsetParent !== null && imgElem.getBoundingClientRect().width > 0) {
+    const imgRect = imgElem.getBoundingClientRect();
+    startWidth = imgRect.width;
+    startHeight = imgRect.height;
+    startCenterX = imgRect.left + startWidth / 2;
+    startCenterY = imgRect.top + startHeight / 2;
+
+    flyerNode = document.createElement('img');
+    flyerNode.src = imgElem.currentSrc || imgElem.src;
+    flyerNode.className = 'flying-cart-item';
+    flyerNode.style.width = `${startWidth}px`;
+    flyerNode.style.height = `${startHeight}px`;
+  } else {
+    // Fallback if no visible image is found
+    const btnRect = (triggerElem && triggerElem.getBoundingClientRect) ? 
+                    triggerElem.getBoundingClientRect() : 
+                    { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 40, height: 40 };
+    startWidth = 50;
+    startHeight = 50;
+    startCenterX = btnRect.left + btnRect.width / 2;
+    startCenterY = btnRect.top + btnRect.height / 2;
+
+    flyerNode = document.createElement('div');
+    flyerNode.className = 'flying-cart-item flying-cart-fallback';
+    flyerNode.innerHTML = '<i class="bi bi-bag-fill"></i>';
+    flyerNode.style.width = '50px';
+    flyerNode.style.height = '50px';
+  }
+
+  // Set initial off-screen / zero origin positioning via CSS translate3d
+  flyerNode.style.top = '0px';
+  flyerNode.style.left = '0px';
+  document.body.appendChild(flyerNode);
+
+  // Control point for a smooth curved arc path (curves upward towards the navbar)
+  const controlX = (startCenterX + targetX) / 2 - 40;
+  const controlY = Math.min(startCenterY, targetY) - 90;
+
+  const duration = 750; // ms
+  const startTime = performance.now();
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const t = Math.min(elapsed / duration, 1);
+
+    // Easing: quadratic ease-out
+    const easeT = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+    // Quadratic Bezier interpolation
+    const curX = (1 - easeT) * (1 - easeT) * startCenterX + 2 * (1 - easeT) * easeT * controlX + easeT * easeT * targetX;
+    const curY = (1 - easeT) * (1 - easeT) * startCenterY + 2 * (1 - easeT) * easeT * controlY + easeT * easeT * targetY;
+
+    // Scale down smoothly as it approaches cart
+    const scale = 1 - 0.83 * easeT;
+    // Fade out during the final 15% of flight path
+    const opacity = t > 0.85 ? 1 - ((t - 0.85) / 0.15) : 1;
+    const rotate = easeT * 12;
+
+    flyerNode.style.transform = `translate3d(${curX - startWidth / 2}px, ${curY - startHeight / 2}px, 0) scale(${scale}) rotate(${rotate}deg)`;
+    flyerNode.style.opacity = opacity;
+
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      if (flyerNode.parentNode) {
+        flyerNode.parentNode.removeChild(flyerNode);
+      }
+      bounceCartIcon(cartTarget);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// Bounce / Pulse Cart Icon on Navbar
+function bounceCartIcon(cartTarget) {
+  if (!cartTarget) return;
+  cartTarget.classList.remove('cart-bounce');
+  void cartTarget.offsetWidth; // Force CSS repaint
+  cartTarget.classList.add('cart-bounce');
+  setTimeout(() => {
+    cartTarget.classList.remove('cart-bounce');
+  }, 600);
+}
+
 
 // Global Wishlist Toggle Function
 function toggleWishlist(productId, btnElement) {

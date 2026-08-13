@@ -31,7 +31,7 @@
           <div class="product-price-wrap mb-3">
             <span class="price-current">{{ product.effective_price | currency }}</span>
           </div>
-          <button class="btn btn-sm btn-avyro btn-avyro-maroon w-100 py-2" onclick="addToCart({{ product.id }})">
+          <button class="btn btn-sm btn-avyro btn-avyro-maroon w-100 py-2" onclick="addToCart({{ product.id }}, 1, this)">
             <i class="bi bi-bag-plus me-1"></i> Add to Cart
           </button>
         </div>
