@@ -8,12 +8,17 @@ class Config:
     # Database URI configuration for local vs Vercel / Remote DB
     db_url = os.environ.get('DATABASE_URL')
 
-    if db_url and db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    if db_url:
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-    # Use pure-python pg8000 driver for PostgreSQL on serverless if postgresql:// is specified
-    if db_url and db_url.startswith("postgresql://") and "postgresql+pg8000://" not in db_url:
-        db_url = db_url.replace("postgresql://", "postgresql+pg8000://", 1)
+        # Use pure-python pg8000 driver for PostgreSQL on serverless if postgresql:// is specified
+        if db_url.startswith("postgresql://") and "postgresql+pg8000://" not in db_url:
+            db_url = db_url.replace("postgresql://", "postgresql+pg8000://", 1)
+
+        # Clean sslmode query param for pg8000 compatibility
+        if "pg8000" in db_url:
+            db_url = db_url.replace("?sslmode=require", "").replace("&sslmode=require", "")
 
     # On Vercel or cloud environments, ignore localhost / 127.0.0.1 database URLs
     if (os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV')) and db_url and ('localhost' in db_url or '127.0.0.1' in db_url):
