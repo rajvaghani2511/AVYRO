@@ -11,6 +11,10 @@ class Config:
     if db_url and db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
 
+    # Use pure-python pg8000 driver for PostgreSQL on serverless if postgresql:// is specified
+    if db_url and db_url.startswith("postgresql://") and "postgresql+pg8000://" not in db_url:
+        db_url = db_url.replace("postgresql://", "postgresql+pg8000://", 1)
+
     # On Vercel, ignore localhost / 127.0.0.1 database URLs because cloud functions cannot reach local laptops
     if os.environ.get('VERCEL') and db_url and ('localhost' in db_url or '127.0.0.1' in db_url):
         db_url = None
