@@ -31,7 +31,7 @@ def checkout():
             return redirect(url_for('cart.view_cart'))
 
     subtotal = cart.total_price
-    shipping = 0.0 if subtotal > 1000 else 99.0
+    shipping = 0.0 if subtotal >= 1000 or subtotal == 0 else 99.0
     discount = 0.0
     grand_total = subtotal + shipping - discount
 

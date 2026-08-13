@@ -32,7 +32,7 @@ def get_or_create_cart():
 def view_cart():
     cart = get_or_create_cart()
     subtotal = cart.total_price
-    shipping = 0.0 if subtotal > 1000 or subtotal == 0 else 99.0
+    shipping = 0.0 if subtotal >= 1000 or subtotal == 0 else 99.0
     grand_total = subtotal + shipping
 
     return render_template('cart.html', cart=cart, subtotal=subtotal, shipping=shipping, grand_total=grand_total)
@@ -49,7 +49,7 @@ def add_to_cart():
 
     product = Product.query.get(product_id)
     if not product or not product.status:
-        return jsonify({'success': False, 'message': 'Product not found or unavailable'}), 444
+        return jsonify({'success': False, 'message': 'Product not found or unavailable'}), 404
 
     if product.stock < quantity:
         return jsonify({'success': False, 'message': f'Only {product.stock} units available in stock'}), 400
@@ -91,7 +91,7 @@ def update_cart_item():
         db.session.delete(cart_item)
         db.session.commit()
         subtotal = cart.total_price
-        shipping = 0.0 if subtotal > 1000 or subtotal == 0 else 99.0
+        shipping = 0.0 if subtotal >= 1000 or subtotal == 0 else 99.0
         return jsonify({
             'success': True,
             'message': 'Item removed',
@@ -109,7 +109,7 @@ def update_cart_item():
     db.session.commit()
 
     subtotal = cart.total_price
-    shipping = 0.0 if subtotal > 1000 or subtotal == 0 else 99.0
+    shipping = 0.0 if subtotal >= 1000 or subtotal == 0 else 99.0
 
     return jsonify({
         'success': True,
@@ -118,7 +118,10 @@ def update_cart_item():
         'cart_count': cart.total_items,
         'subtotal': subtotal,
         'shipping': shipping,
-        'grand_total': subtotal + shipping
+        'grand_total': subtotal + shipping,
+        'item_id': item_id,
+        'quantity': cart_item.quantity,
+        'unit_price': cart_item.product.effective_price
     })
 
 
@@ -135,7 +138,7 @@ def remove_cart_item():
         db.session.commit()
 
     subtotal = cart.total_price
-    shipping = 0.0 if subtotal > 1000 or subtotal == 0 else 99.0
+    shipping = 0.0 if subtotal >= 1000 or subtotal == 0 else 99.0
 
     return jsonify({
         'success': True,

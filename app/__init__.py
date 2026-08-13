@@ -67,10 +67,13 @@ def create_app(config_class=Config):
     def currency_filter(value):
         try:
             if value is None or str(value).strip() == '':
-                return "₹0.00"
-            return f"₹{float(value):,.2f}"
+                return "₹0"
+            val = float(value)
+            if val.is_integer():
+                return f"₹{int(val):,}"
+            return f"₹{val:,.2f}"
         except (ValueError, TypeError):
-            return "₹0.00"
+            return "₹0"
 
     @app.template_filter('img_url')
     def img_url_filter(filename):

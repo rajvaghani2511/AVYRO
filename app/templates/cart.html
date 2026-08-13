@@ -18,7 +18,7 @@
     <div class="col-lg-8">
       <div class="card border-0 shadow-sm radius-lg p-4 bg-white">
         <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom">
-          <h6 class="font-serif fw-bold mb-0 text-dark fs-5">Bag Items ({{ cart.total_items }})</h6>
+          <h6 class="font-serif fw-bold mb-0 text-dark fs-5 bag-items-count">Bag Items ({{ cart.total_items }})</h6>
           <a href="{{ url_for('shop.products') }}" class="text-primary small fw-semibold">&larr; Continue Browsing</a>
         </div>
 
@@ -38,9 +38,9 @@
             <div class="d-flex align-items-center justify-content-between justify-content-sm-end gap-4">
               <!-- Quantity Controller -->
               <div class="quantity-control">
-                <button class="btn-qty" onclick="changeCartQty({{ item.id }}, {{ item.quantity - 1 }})">-</button>
-                <input type="number" class="qty-input" value="{{ item.quantity }}" readonly>
-                <button class="btn-qty" onclick="changeCartQty({{ item.id }}, {{ item.quantity + 1 }})">+</button>
+                <button class="btn-qty" type="button" onclick="updateItemQuantity({{ item.id }}, -1)">-</button>
+                <input type="number" id="qty-input-{{ item.id }}" class="qty-input" value="{{ item.quantity }}" data-price="{{ item.product.effective_price }}" data-item-id="{{ item.id }}" readonly>
+                <button class="btn-qty" type="button" onclick="updateItemQuantity({{ item.id }}, 1)">+</button>
               </div>
 
               <!-- Item Subtotal -->
@@ -49,7 +49,7 @@
               </div>
 
               <!-- Remove Button -->
-              <button class="btn btn-sm btn-outline-danger border-0 rounded-circle" onclick="removeItem({{ item.id }})" title="Remove item">
+              <button class="btn btn-sm btn-outline-danger border-0 rounded-circle" type="button" onclick="removeItem({{ item.id }})" title="Remove item">
                 <i class="bi bi-trash fs-6"></i>
               </button>
             </div>
@@ -80,7 +80,7 @@
           </strong>
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3" id="freeShippingBanner">
           {% if subtotal < 1000 %}
           <div class="progress" style="height: 6px;">
             <div class="progress-bar bg-warning" role="progressbar" style="width: {{ (subtotal / 1000) * 100 }}%;"></div>
@@ -134,36 +134,178 @@
 
 {% block extra_js %}
 <script>
-function changeCartQty(itemId, newQty) {
+function formatCurrency(amount) {
+  const num = parseFloat(amount) || 0;
+  if (Number.isInteger(num)) {
+    return '₹' + num.toLocaleString('en-IN');
+  }
+  return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function updateItemQuantity(itemId, delta) {
+  const input = document.getElementById(`qty-input-${itemId}`);
+  if (!input) return;
+
+  const currentQty = parseInt(input.value) || 1;
+  const newQty = currentQty + delta;
+
+  // Requirement 2: Never allow quantity to go below 1
+  if (newQty < 1) {
+    return;
+  }
+
+  // Update input immediately
+  input.value = newQty;
+
+  // Recalculate totals immediately on frontend
+  recalculateCartTotals();
+
+  // Save updated quantity to server backend DB
   fetch('/api/cart/update', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ item_id: itemId, quantity: parseInt(newQty) })
+    body: JSON.stringify({ item_id: itemId, quantity: newQty })
   })
   .then(res => res.json())
   .then(data => {
     if (data.success) {
-      if (data.removed) {
-        document.getElementById(`cart-item-${itemId}`).remove();
-        if (data.cart_count === 0) window.location.reload();
-      } else {
-        document.getElementById(`subtotal-${itemId}`).innerText = `₹${data.item_subtotal.toFixed(2)}`;
+      if (data.quantity !== undefined) {
+        input.value = data.quantity;
       }
-
-      document.getElementById('summarySubtotal').innerText = `₹${data.subtotal.toFixed(2)}`;
-      document.getElementById('summaryShipping').innerText = data.shipping === 0 ? 'FREE' : `₹${data.shipping.toFixed(2)}`;
-      document.getElementById('summaryGrandTotal').innerText = `₹${data.grand_total.toFixed(2)}`;
-
-      const badges = document.querySelectorAll('.cart-badge-count');
-      badges.forEach(b => { b.innerText = data.cart_count; });
+      applyServerTotals(data);
     } else {
-      showToast(data.message, 'danger');
+      showToast(data.message || 'Could not update quantity', 'warning');
+      input.value = currentQty;
+      recalculateCartTotals();
     }
+  })
+  .catch(err => {
+    console.error('Error updating cart item quantity:', err);
+    showToast('Failed to update cart', 'danger');
+    input.value = currentQty;
+    recalculateCartTotals();
   });
 }
 
+function recalculateCartTotals() {
+  const rows = document.querySelectorAll('.cart-item-row');
+  let subtotal = 0;
+  let totalItemsCount = 0;
+
+  rows.forEach(row => {
+    const input = row.querySelector('.qty-input');
+    if (!input) return;
+
+    const itemId = input.getAttribute('data-item-id');
+    const unitPrice = parseFloat(input.getAttribute('data-price')) || 0;
+    const qty = parseInt(input.value) || 1;
+
+    const itemTotal = unitPrice * qty;
+    subtotal += itemTotal;
+    totalItemsCount += qty;
+
+    const itemSubtotalElem = document.getElementById(`subtotal-${itemId}`);
+    if (itemSubtotalElem) {
+      itemSubtotalElem.innerText = formatCurrency(itemTotal);
+    }
+  });
+
+  const shipping = (subtotal >= 1000 || subtotal === 0) ? 0 : 99;
+  const grandTotal = subtotal + shipping;
+
+  const subtotalElem = document.getElementById('summarySubtotal');
+  const shippingElem = document.getElementById('summaryShipping');
+  const grandTotalElem = document.getElementById('summaryGrandTotal');
+  const countElem = document.querySelector('.bag-items-count');
+
+  if (subtotalElem) subtotalElem.innerText = formatCurrency(subtotal);
+  if (shippingElem) {
+    shippingElem.innerHTML = shipping === 0 ? '<span class="text-success">FREE</span>' : formatCurrency(shipping);
+  }
+  if (grandTotalElem) grandTotalElem.innerText = formatCurrency(grandTotal);
+  if (countElem) countElem.innerText = `Bag Items (${totalItemsCount})`;
+
+  const badges = document.querySelectorAll('.cart-badge-count');
+  badges.forEach(b => { b.innerText = totalItemsCount; });
+
+  updateFreeShippingBanner(subtotal);
+}
+
+function updateFreeShippingBanner(subtotal) {
+  const bannerContainer = document.getElementById('freeShippingBanner');
+  if (!bannerContainer) return;
+
+  if (subtotal === 0) {
+    bannerContainer.innerHTML = '';
+    return;
+  }
+
+  if (subtotal < 1000) {
+    const remaining = 1000 - subtotal;
+    const percent = Math.min((subtotal / 1000) * 100, 100);
+    bannerContainer.innerHTML = `
+      <div class="progress" style="height: 6px;">
+        <div class="progress-bar bg-warning" role="progressbar" style="width: ${percent}%;"></div>
+      </div>
+      <span class="extra-small text-muted mt-1 d-block">Add ${formatCurrency(remaining)} more for FREE Shipping!</span>
+    `;
+  } else {
+    bannerContainer.innerHTML = `
+      <span class="badge bg-success-subtle text-success border border-success-subtle w-100 py-2">
+        <i class="bi bi-check-circle-fill me-1"></i> You qualify for FREE Express Shipping!
+      </span>
+    `;
+  }
+}
+
+function applyServerTotals(data) {
+  if (data.subtotal !== undefined) {
+    const subtotalElem = document.getElementById('summarySubtotal');
+    if (subtotalElem) subtotalElem.innerText = formatCurrency(data.subtotal);
+  }
+  if (data.shipping !== undefined) {
+    const shippingElem = document.getElementById('summaryShipping');
+    if (shippingElem) {
+      shippingElem.innerHTML = data.shipping === 0 ? '<span class="text-success">FREE</span>' : formatCurrency(data.shipping);
+    }
+  }
+  if (data.grand_total !== undefined) {
+    const grandTotalElem = document.getElementById('summaryGrandTotal');
+    if (grandTotalElem) grandTotalElem.innerText = formatCurrency(data.grand_total);
+  }
+  if (data.cart_count !== undefined) {
+    const badges = document.querySelectorAll('.cart-badge-count');
+    badges.forEach(b => { b.innerText = data.cart_count; });
+  }
+  if (data.subtotal !== undefined) {
+    updateFreeShippingBanner(data.subtotal);
+  }
+}
+
 function removeItem(itemId) {
-  changeCartQty(itemId, 0);
+  const row = document.getElementById(`cart-item-${itemId}`);
+  if (row) {
+    row.remove();
+  }
+
+  recalculateCartTotals();
+
+  fetch('/api/cart/remove', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ item_id: itemId })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message || 'Item removed', 'info');
+      applyServerTotals(data);
+      if (data.cart_count === 0) {
+        window.location.reload();
+      }
+    }
+  })
+  .catch(err => console.error('Error removing item from cart:', err));
 }
 </script>
 {% endblock %}
