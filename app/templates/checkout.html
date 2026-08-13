@@ -30,7 +30,11 @@
             </div>
             <div class="col-12">
               <label class="form-label small fw-semibold text-muted">Mobile Phone Number *</label>
-              <input type="tel" name="phone" class="form-control" placeholder="Your Phone Number" required>
+              <div class="input-group">
+                <span class="input-group-text bg-sand text-dark font-serif fw-bold border-end-0 px-3">+91</span>
+                <input type="tel" name="phone" id="phoneInput" class="form-control border-start-0 ps-2" placeholder="Your Phone Number" maxlength="10" inputmode="numeric" required>
+              </div>
+              <div id="phoneError" class="invalid-feedback fw-semibold extra-small mt-1" style="display: none; color: #dc3545;"></div>
             </div>
           </div>
         </div>
@@ -168,12 +172,88 @@ document.addEventListener('DOMContentLoaded', function() {
   const stateDropdown = document.getElementById('stateDropdown');
   const pincodeInput = document.getElementById('pincodeInput');
   const pincodeError = document.getElementById('pincodeError');
+  const phoneInput = document.getElementById('phoneInput');
+  const phoneError = document.getElementById('phoneError');
   const placeOrderBtn = document.getElementById('placeOrderBtn');
 
   let currentPincodeData = null;
   let pincodeValid = true;
+  let phoneValid = false;
 
-  // 1. Numeric-only Pincode Input Filter
+  // 1. Mobile Phone Input Filtering & Validation
+  if (phoneInput) {
+    phoneInput.addEventListener('input', function() {
+      // Filter non-digits
+      let digits = this.value.replace(/[^0-9]/g, '');
+      
+      // Prevent leading 91 if pasted
+      if (digits.startsWith('91') && digits.length > 10) {
+        digits = digits.substring(2);
+      }
+
+      // Limit to 10 digits max
+      if (digits.length > 10) {
+        digits = digits.substring(0, 10);
+      }
+
+      this.value = digits;
+
+      if (digits.length === 10) {
+        validatePhoneNumber();
+      } else {
+        if (digits.length > 0 && digits.length < 10) {
+          showPhoneError('Please enter a valid 10-digit mobile number.');
+        } else {
+          clearPhoneError();
+        }
+      }
+    });
+
+    phoneInput.addEventListener('blur', function() {
+      validatePhoneNumber();
+    });
+  }
+
+  function validatePhoneNumber() {
+    if (!phoneInput) return true;
+    const digits = phoneInput.value.replace(/[^0-9]/g, '');
+    if (digits.length === 10 && /^[6-9][0-9]{9}$/.test(digits)) {
+      clearPhoneError();
+      return true;
+    } else {
+      showPhoneError('Please enter a valid 10-digit mobile number.');
+      return false;
+    }
+  }
+
+  function showPhoneError(msg) {
+    phoneValid = false;
+    if (phoneInput) {
+      phoneInput.classList.remove('is-valid');
+      phoneInput.classList.add('is-invalid');
+    }
+    if (phoneError) {
+      phoneError.innerText = msg;
+      phoneError.style.display = 'block';
+    }
+    updatePlaceOrderBtnState();
+  }
+
+  function clearPhoneError() {
+    phoneValid = true;
+    if (phoneInput) {
+      phoneInput.classList.remove('is-invalid');
+      if (phoneInput.value.length === 10) {
+        phoneInput.classList.add('is-valid');
+      }
+    }
+    if (phoneError) {
+      phoneError.style.display = 'none';
+    }
+    updatePlaceOrderBtnState();
+  }
+
+  // 2. Numeric-only Pincode Input Filter
   if (pincodeInput) {
     pincodeInput.addEventListener('input', function() {
       this.value = this.value.replace(/[^0-9]/g, '');
@@ -190,7 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // 2. City Autocomplete Search
+  // 3. City Autocomplete Search
   let cityDebounce;
   if (cityInput && cityDropdown) {
     cityInput.addEventListener('input', function() {
@@ -237,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // 3. State Autocomplete Search
+  // 4. State Autocomplete Search
   let stateDebounce;
   if (stateInput && stateDropdown) {
     stateInput.addEventListener('input', function() {
@@ -291,15 +371,19 @@ document.addEventListener('DOMContentLoaded', function() {
   if (cityInput) cityInput.addEventListener('change', verifyLocationMatch);
   if (stateInput) stateInput.addEventListener('change', verifyLocationMatch);
 
-  // 4. Pincode Lookup & Validation Function
+  // 5. Pincode Lookup & Validation Function
   function validatePincodeAndLocation(pin) {
     if (pin.length !== 6 || !/^[1-9][0-9]{5}$/.test(pin) || pin === '000000' || pin === '123456') {
       showPincodeError('Invalid Indian PIN code.');
       return;
     }
 
-    pincodeInput.classList.remove('is-valid', 'is-invalid');
-    pincodeError.style.display = 'none';
+    if (pincodeInput) {
+        pincodeInput.classList.remove('is-valid', 'is-invalid');
+    }
+    if (pincodeError) {
+        pincodeError.style.display = 'none';
+    }
 
     fetch(`/api/pincode/lookup/${pin}`)
       .then(res => res.json())
@@ -374,42 +458,78 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function showPincodeError(msg) {
     pincodeValid = false;
-    pincodeInput.classList.remove('is-valid');
-    pincodeInput.classList.add('is-invalid');
-    pincodeError.innerText = msg;
-    pincodeError.style.display = 'block';
-    if (placeOrderBtn) {
-      placeOrderBtn.disabled = true;
-      placeOrderBtn.classList.add('opacity-50');
+    if (pincodeInput) {
+      pincodeInput.classList.remove('is-valid');
+      pincodeInput.classList.add('is-invalid');
     }
+    if (pincodeError) {
+      pincodeError.innerText = msg;
+      pincodeError.style.display = 'block';
+    }
+    updatePlaceOrderBtnState();
   }
 
   function clearPincodeError() {
     pincodeValid = true;
-    pincodeInput.classList.remove('is-invalid');
-    if (pincodeInput.value.length === 6) {
-      pincodeInput.classList.add('is-valid');
+    if (pincodeInput) {
+      pincodeInput.classList.remove('is-invalid');
+      if (pincodeInput.value.length === 6) {
+        pincodeInput.classList.add('is-valid');
+      }
     }
-    pincodeError.style.display = 'none';
+    if (pincodeError) {
+      pincodeError.style.display = 'none';
+    }
+    updatePlaceOrderBtnState();
+  }
+
+  function updatePlaceOrderBtnState() {
+    const isPinOk = pincodeInput && pincodeInput.value.length === 6 && !pincodeInput.classList.contains('is-invalid') && pincodeValid;
+    const isPhoneOk = !phoneInput || (phoneInput.value.length === 10 && !phoneInput.classList.contains('is-invalid') && phoneValid);
+
     if (placeOrderBtn) {
-      placeOrderBtn.disabled = false;
-      placeOrderBtn.classList.remove('opacity-50');
+      if (isPinOk && isPhoneOk) {
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.classList.remove('opacity-50');
+      } else {
+        placeOrderBtn.disabled = true;
+        placeOrderBtn.classList.add('opacity-50');
+      }
     }
   }
 
   if (form) {
     form.addEventListener('submit', function(e) {
-      if (pincodeInput && (pincodeInput.value.length !== 6 || !pincodeValid || pincodeInput.classList.contains('is-invalid'))) {
+      const isPhoneOk = validatePhoneNumber();
+      const isPinOk = pincodeInput && pincodeInput.value.length === 6 && pincodeValid && !pincodeInput.classList.contains('is-invalid');
+
+      if (!isPhoneOk) {
+        e.preventDefault();
+        showPhoneError('Please enter a valid 10-digit mobile number.');
+        if (phoneInput) {
+          phoneInput.focus();
+          phoneInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+
+      if (!isPinOk) {
         e.preventDefault();
         showPincodeError(pincodeError.innerText || 'Please enter a valid pincode for the selected city and state.');
-        pincodeInput.focus();
-        pincodeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (pincodeInput) {
+          pincodeInput.focus();
+          pincodeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
       }
     });
   }
 
   if (pincodeInput && pincodeInput.value.length === 6) {
     validatePincodeAndLocation(pincodeInput.value);
+  }
+  if (phoneInput && phoneInput.value.length === 10) {
+    validatePhoneNumber();
   }
 });
 </script>

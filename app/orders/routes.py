@@ -106,7 +106,7 @@ def checkout():
     if request.method == 'POST':
         full_name = request.form.get('full_name', '').strip()
         email = request.form.get('email', '').strip()
-        phone = request.form.get('phone', '').strip()
+        phone_raw = request.form.get('phone', '').strip()
         address_text = request.form.get('address', '').strip()
         city = request.form.get('city', '').strip()
         state = request.form.get('state', '').strip()
@@ -114,7 +114,18 @@ def checkout():
         country = request.form.get('country', 'India').strip()
         payment_method = request.form.get('payment_method', 'cod')
 
-        if not all([full_name, email, phone, address_text, city, state, pincode]):
+        # Sanitize and validate 10-digit Indian phone number
+        phone_digits = ''.join(filter(str.isdigit, phone_raw))
+        if phone_digits.startswith('91') and len(phone_digits) == 12:
+            phone_digits = phone_digits[2:]
+
+        if len(phone_digits) != 10:
+            flash('Please enter a valid 10-digit mobile number.', 'danger')
+            return render_template('checkout.html', cart=cart, shipping=shipping, grand_total=grand_total, default_address=default_address)
+
+        phone = f"+91 {phone_digits}"
+
+        if not all([full_name, email, phone_digits, address_text, city, state, pincode]):
             flash('Please fill in all shipping details.', 'danger')
             return render_template('checkout.html', cart=cart, shipping=shipping, grand_total=grand_total, default_address=default_address)
 
