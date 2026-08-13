@@ -1,9 +1,10 @@
-import random
-import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+import urllib.request
+import json
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import login_required, current_user
 from app.extensions import db
 from app.models import Cart, Order, OrderItem, Address, Product
+from app.location_data import search_cities, search_states, lookup_local_pincode
 
 orders_bp = Blueprint('orders', __name__)
 
@@ -11,6 +12,66 @@ def generate_order_number():
     date_str = datetime.datetime.utcnow().strftime('%Y%m%d')
     random_digits = str(random.randint(1000, 9999))
     return f"AVY-{date_str}-{random_digits}"
+
+@orders_bp.route('/api/location/cities')
+def api_search_cities():
+    q = request.args.get('q', '')
+    results = search_cities(q)
+    return jsonify(results)
+
+@orders_bp.route('/api/location/states')
+def api_search_states():
+    q = request.args.get('q', '')
+    results = search_states(q)
+    return jsonify(results)
+
+@orders_bp.route('/api/pincode/lookup/<pincode>')
+def api_pincode_lookup(pincode):
+    pincode = (pincode or '').strip()
+    if len(pincode) != 6 or not pincode.isdigit() or pincode[0] == '0' or pincode in {'000000', '123456', '111111', '999999'}:
+        return jsonify({'valid': False, 'message': 'Invalid Indian PIN code. Must be 6 valid numeric digits.'}), 400
+
+    # Try official India Post API first
+    try:
+        req = urllib.request.Request(
+            f'https://api.postalpincode.in/pincode/{pincode}',
+            headers={'User-Agent': 'Mozilla/5.0'}
+        )
+        with urllib.request.urlopen(req, timeout=2.5) as resp:
+            raw = resp.read().decode('utf-8')
+            data = json.loads(raw)
+            if data and isinstance(data, list) and len(data) > 0:
+                res = data[0]
+                if res.get('Status') == 'Success' and res.get('PostOffice'):
+                    post_offices = res['PostOffice']
+                    districts = list(set([po['District'] for po in post_offices if po.get('District')]))
+                    states = list(set([po['State'] for po in post_offices if po.get('State')]))
+                    places = list(set([po['Name'] for po in post_offices if po.get('Name')]))
+
+                    city = districts[0] if districts else (places[0] if places else '')
+                    state = states[0] if states else ''
+
+                    return jsonify({
+                        'valid': True,
+                        'city': city,
+                        'state': state,
+                        'districts': districts,
+                        'states': states,
+                        'places': places,
+                        'pincode': pincode
+                    })
+                elif res.get('Status') == 'Error':
+                    return jsonify({'valid': False, 'message': 'Invalid Indian postal PIN code.'}), 400
+    except Exception as e:
+        print(f"India Post API lookup notice ({pincode}):", e)
+
+    # Fallback to local dataset lookup if API is unreachable
+    local = lookup_local_pincode(pincode)
+    if local and local.get('valid'):
+        return jsonify(local)
+
+    return jsonify({'valid': False, 'message': 'Invalid Indian PIN code.'}), 400
+
 
 @orders_bp.route('/checkout', methods=['GET', 'POST'])
 def checkout():

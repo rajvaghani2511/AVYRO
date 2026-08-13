@@ -42,20 +42,27 @@
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label small fw-semibold text-muted">Street Address / House No. *</label>
-              <textarea name="address" class="form-control" rows="2" placeholder="Suite, Flat no, Street name, Landmark..." required>{% if default_address %}{{ default_address.address }}{% endif %}</textarea>
+              <textarea name="address" class="form-control" rows="2" placeholder="House No., Building, Street, Area" required>{% if default_address %}{{ default_address.address }}{% endif %}</textarea>
             </div>
-            <div class="col-md-4">
+            
+            <div class="col-md-4 position-relative">
               <label class="form-label small fw-semibold text-muted">City *</label>
-              <input type="text" name="city" class="form-control" value="{% if default_address %}{{ default_address.city }}{% endif %}" required>
+              <input type="text" name="city" id="cityInput" class="form-control" value="{% if default_address %}{{ default_address.city }}{% endif %}" placeholder="Search City..." autocomplete="off" required>
+              <div id="cityDropdown" class="dropdown-menu shadow-lg w-100 mt-1 overflow-auto" style="max-height: 220px; display: none; z-index: 1050;"></div>
             </div>
-            <div class="col-md-4">
+
+            <div class="col-md-4 position-relative">
               <label class="form-label small fw-semibold text-muted">State *</label>
-              <input type="text" name="state" class="form-control" value="{% if default_address %}{{ default_address.state }}{% endif %}" required>
+              <input type="text" name="state" id="stateInput" class="form-control" value="{% if default_address %}{{ default_address.state }}{% endif %}" placeholder="Search State..." autocomplete="off" required>
+              <div id="stateDropdown" class="dropdown-menu shadow-lg w-100 mt-1 overflow-auto" style="max-height: 220px; display: none; z-index: 1050;"></div>
             </div>
+
             <div class="col-md-4">
               <label class="form-label small fw-semibold text-muted">Pincode *</label>
-              <input type="text" name="pincode" class="form-control" value="{% if default_address %}{{ default_address.pincode }}{% endif %}" required>
+              <input type="text" name="pincode" id="pincodeInput" class="form-control" value="{% if default_address %}{{ default_address.pincode }}{% endif %}" placeholder="6-digit PIN" maxlength="6" inputmode="numeric" required>
+              <div id="pincodeError" class="invalid-feedback fw-semibold extra-small mt-1" style="display: none; color: #dc3545;"></div>
             </div>
+
             <div class="col-12">
               <label class="form-label small fw-semibold text-muted">Country *</label>
               <input type="text" name="country" class="form-control" value="India" readonly>
@@ -136,7 +143,7 @@
             <strong class="fs-3 text-primary font-serif">{{ grand_total | currency }}</strong>
           </div>
 
-          <button type="submit" class="btn btn-avyro btn-avyro-maroon w-100 py-3 font-serif fw-bold fs-6">
+          <button type="submit" id="placeOrderBtn" class="btn btn-avyro btn-avyro-maroon w-100 py-3 font-serif fw-bold fs-6">
             <i class="bi bi-lock-fill me-1"></i> PLACE ORDER NOW &rarr;
           </button>
 
@@ -149,4 +156,261 @@
   </form>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form[action*="checkout"]');
+  const cityInput = document.getElementById('cityInput');
+  const cityDropdown = document.getElementById('cityDropdown');
+  const stateInput = document.getElementById('stateInput');
+  const stateDropdown = document.getElementById('stateDropdown');
+  const pincodeInput = document.getElementById('pincodeInput');
+  const pincodeError = document.getElementById('pincodeError');
+  const placeOrderBtn = document.getElementById('placeOrderBtn');
+
+  let currentPincodeData = null;
+  let pincodeValid = true;
+
+  // 1. Numeric-only Pincode Input Filter
+  if (pincodeInput) {
+    pincodeInput.addEventListener('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '');
+      if (this.value.length === 6) {
+        validatePincodeAndLocation(this.value);
+      } else {
+        currentPincodeData = null;
+        if (this.value.length > 0 && this.value.length < 6) {
+          showPincodeError('Pincode must be exactly 6 digits.');
+        } else {
+          clearPincodeError();
+        }
+      }
+    });
+  }
+
+  // 2. City Autocomplete Search
+  let cityDebounce;
+  if (cityInput && cityDropdown) {
+    cityInput.addEventListener('input', function() {
+      clearTimeout(cityDebounce);
+      const query = this.value.trim();
+      if (query.length === 0) {
+        cityDropdown.style.display = 'none';
+        return;
+      }
+      cityDebounce = setTimeout(() => {
+        fetch(`/api/location/cities?q=${encodeURIComponent(query)}`)
+          .then(res => res.json())
+          .then(cities => {
+            if (!cities || cities.length === 0) {
+              cityDropdown.style.display = 'none';
+              return;
+            }
+            cityDropdown.innerHTML = cities.map(c => `
+              <button type="button" class="dropdown-item py-2 px-3 small font-serif d-flex justify-content-between align-items-center" data-city="${c.city}" data-state="${c.state}">
+                <strong>${c.city}</strong>
+                <span class="text-muted extra-small ms-2">${c.state}</span>
+              </button>
+            `).join('');
+            cityDropdown.style.display = 'block';
+          })
+          .catch(() => cityDropdown.style.display = 'none');
+      }, 150);
+    });
+
+    cityDropdown.addEventListener('click', function(e) {
+      const btn = e.target.closest('.dropdown-item');
+      if (btn) {
+        const selCity = btn.getAttribute('data-city');
+        const selState = btn.getAttribute('data-state');
+        cityInput.value = selCity;
+        if (selState && stateInput) {
+          stateInput.value = selState;
+        }
+        cityDropdown.style.display = 'none';
+        if (pincodeInput && pincodeInput.value.length === 6) {
+          verifyLocationMatch();
+        }
+      }
+    });
+  }
+
+  // 3. State Autocomplete Search
+  let stateDebounce;
+  if (stateInput && stateDropdown) {
+    stateInput.addEventListener('input', function() {
+      clearTimeout(stateDebounce);
+      const query = this.value.trim();
+      if (query.length === 0) {
+        stateDropdown.style.display = 'none';
+        return;
+      }
+      stateDebounce = setTimeout(() => {
+        fetch(`/api/location/states?q=${encodeURIComponent(query)}`)
+          .then(res => res.json())
+          .then(states => {
+            if (!states || states.length === 0) {
+              stateDropdown.style.display = 'none';
+              return;
+            }
+            stateDropdown.innerHTML = states.map(s => `
+              <button type="button" class="dropdown-item py-2 px-3 small font-serif" data-state="${s}">
+                ${s}
+              </button>
+            `).join('');
+            stateDropdown.style.display = 'block';
+          })
+          .catch(() => stateDropdown.style.display = 'none');
+      }, 150);
+    });
+
+    stateDropdown.addEventListener('click', function(e) {
+      const btn = e.target.closest('.dropdown-item');
+      if (btn) {
+        stateInput.value = btn.getAttribute('data-state');
+        stateDropdown.style.display = 'none';
+        if (pincodeInput && pincodeInput.value.length === 6) {
+          verifyLocationMatch();
+        }
+      }
+    });
+  }
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', function(e) {
+    if (cityDropdown && !cityInput.contains(e.target) && !cityDropdown.contains(e.target)) {
+      cityDropdown.style.display = 'none';
+    }
+    if (stateDropdown && !stateInput.contains(e.target) && !stateDropdown.contains(e.target)) {
+      stateDropdown.style.display = 'none';
+    }
+  });
+
+  if (cityInput) cityInput.addEventListener('change', verifyLocationMatch);
+  if (stateInput) stateInput.addEventListener('change', verifyLocationMatch);
+
+  // 4. Pincode Lookup & Validation Function
+  function validatePincodeAndLocation(pin) {
+    if (pin.length !== 6 || !/^[1-9][0-9]{5}$/.test(pin) || pin === '000000' || pin === '123456') {
+      showPincodeError('Invalid Indian PIN code.');
+      return;
+    }
+
+    pincodeInput.classList.remove('is-valid', 'is-invalid');
+    pincodeError.style.display = 'none';
+
+    fetch(`/api/pincode/lookup/${pin}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.valid) {
+          currentPincodeData = data;
+          
+          // Auto-fill City & State if currently blank
+          if (!cityInput.value.trim() && data.city) {
+            cityInput.value = data.city;
+          }
+          if (!stateInput.value.trim() && data.state) {
+            stateInput.value = data.state;
+          }
+
+          verifyLocationMatch();
+        } else {
+          currentPincodeData = null;
+          showPincodeError(data.message || 'Invalid Indian PIN code.');
+        }
+      })
+      .catch(err => {
+        console.error('Pincode lookup error:', err);
+        if (pin.length === 6 && /^[1-9][0-9]{5}$/.test(pin)) {
+          clearPincodeError();
+        } else {
+          showPincodeError('Invalid Indian PIN code.');
+        }
+      });
+  }
+
+  function verifyLocationMatch() {
+    if (!pincodeInput || pincodeInput.value.length !== 6) {
+      clearPincodeError();
+      return;
+    }
+
+    const pin = pincodeInput.value.trim();
+    if (!/^[1-9][0-9]{5}$/.test(pin) || pin === '000000' || pin === '123456') {
+      showPincodeError('Invalid Indian PIN code.');
+      return;
+    }
+
+    const selCity = (cityInput ? cityInput.value : '').trim().toLowerCase();
+    const selState = (stateInput ? stateInput.value : '').trim().toLowerCase();
+
+    if (!currentPincodeData) {
+      validatePincodeAndLocation(pin);
+      return;
+    }
+
+    const data = currentPincodeData;
+    const validDistricts = (data.districts || [data.city]).map(d => d.toLowerCase());
+    const validStates = (data.states || [data.state]).map(s => s.toLowerCase());
+    const validPlaces = (data.places || []).map(p => p.toLowerCase());
+
+    let cityMatch = !selCity || validDistricts.some(d => d.includes(selCity) || selCity.includes(d)) || validPlaces.some(p => p.includes(selCity) || selCity.includes(p));
+    let stateMatch = !selState || validStates.some(s => s.includes(selState) || selState.includes(s));
+
+    if (data.city && selCity && !cityMatch) {
+      showPincodeError('Please enter a valid pincode for the selected city and state.');
+      return;
+    }
+
+    if (data.state && selState && !stateMatch) {
+      showPincodeError('Please enter a valid pincode for the selected city and state.');
+      return;
+    }
+
+    clearPincodeError();
+  }
+
+  function showPincodeError(msg) {
+    pincodeValid = false;
+    pincodeInput.classList.remove('is-valid');
+    pincodeInput.classList.add('is-invalid');
+    pincodeError.innerText = msg;
+    pincodeError.style.display = 'block';
+    if (placeOrderBtn) {
+      placeOrderBtn.disabled = true;
+      placeOrderBtn.classList.add('opacity-50');
+    }
+  }
+
+  function clearPincodeError() {
+    pincodeValid = true;
+    pincodeInput.classList.remove('is-invalid');
+    if (pincodeInput.value.length === 6) {
+      pincodeInput.classList.add('is-valid');
+    }
+    pincodeError.style.display = 'none';
+    if (placeOrderBtn) {
+      placeOrderBtn.disabled = false;
+      placeOrderBtn.classList.remove('opacity-50');
+    }
+  }
+
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      if (pincodeInput && (pincodeInput.value.length !== 6 || !pincodeValid || pincodeInput.classList.contains('is-invalid'))) {
+        e.preventDefault();
+        showPincodeError(pincodeError.innerText || 'Please enter a valid pincode for the selected city and state.');
+        pincodeInput.focus();
+        pincodeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+
+  if (pincodeInput && pincodeInput.value.length === 6) {
+    validatePincodeAndLocation(pincodeInput.value);
+  }
+});
+</script>
 {% endblock %}
