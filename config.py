@@ -3,10 +3,7 @@ import shutil
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'avyro-dev-secret-key-987654321'
-
-    # Detect Vercel / AWS Lambda / Read-Only Serverless Container Environment
+def get_database_uri():
     is_serverless = (
         os.environ.get('VERCEL') is not None or
         os.environ.get('VERCEL_ENV') is not None or
@@ -24,16 +21,26 @@ class Config:
         if db_url.startswith("postgresql://") and "postgresql+pg8000://" not in db_url:
             db_url = db_url.replace("postgresql://", "postgresql+pg8000://", 1)
 
-        if "pg8000" in db_url:
-            db_url = db_url.replace("?sslmode=require", "").replace("&sslmode=require", "")
+        # Strip unsupported query parameters for pg8000 driver safely
+        if "pg8000" in db_url and "?" in db_url:
+            base_part, query_part = db_url.split("?", 1)
+            allowed_params = []
+            for item in query_part.split("&"):
+                is_invalid = False
+                for prefix in ['sslmode=', 'ssl=', 'channel_binding=', 'gssencmode=']:
+                    if item.startswith(prefix):
+                        is_invalid = True
+                        break
+                if not is_invalid:
+                    allowed_params.append(item)
+            db_url = base_part + ("?" + "&".join(allowed_params) if allowed_params else "")
 
     if is_serverless and db_url and ('localhost' in db_url or '127.0.0.1' in db_url):
         db_url = None
 
     if db_url:
-        SQLALCHEMY_DATABASE_URI = db_url
+        return db_url
     elif is_serverless:
-        # Pre-populate /tmp/avyro.db from bundled instance/avyro.db if available
         tmp_db_path = '/tmp/avyro.db'
         bundled_db_path = os.path.join(BASE_DIR, 'instance', 'avyro.db')
         try:
@@ -43,10 +50,23 @@ class Config:
         except Exception as e:
             print(f"Serverless DB Copy Notice: {e}")
             
-        SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/avyro.db'
+        return 'sqlite:////tmp/avyro.db'
     else:
-        SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BASE_DIR, 'instance', 'avyro.db')}"
+        return f"sqlite:///{os.path.join(BASE_DIR, 'instance', 'avyro.db')}"
 
+
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'avyro-dev-secret-key-987654321'
+
+    is_serverless = (
+        os.environ.get('VERCEL') is not None or
+        os.environ.get('VERCEL_ENV') is not None or
+        os.environ.get('AWS_LAMBDA_FUNCTION_NAME') is not None or
+        os.environ.get('LAMBDA_TASK_ROOT') is not None or
+        not os.access(BASE_DIR, os.W_OK)
+    )
+
+    SQLALCHEMY_DATABASE_URI = get_database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     if is_serverless:
