@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}AVYRO — Traditional Soul • Modern Luxury{% endblock %}</title>
+
+  <!-- Meta Tags for SEO -->
+  <meta name="description" content="AVYRO offers handcrafted physical products, modern wearables, audio precision, and lifestyle gear inspired by traditional soul and contemporary luxury.">
+  <meta property="og:title" content="AVYRO — Traditional Soul • Modern Luxury">
+  <meta property="og:description" content="Curated luxury physical products, fast nationwide shipping, and authentic craftsmanship.">
+
+  <!-- Bootstrap 5 & Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <!-- Google Fonts: Cormorant Garamond, Playfair Display & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- AVYRO Design System -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Announcement Strip -->
+  <div class="top-announcement-strip">
+    <span>FREE NATIONWIDE EXPRESS SHIPPING • 100% AUTHENTIC CRAFTSMANSHIP • 2-YEAR WARRANTY</span>
+  </div>
+
+  <!-- Editorial Sticky Navbar -->
+  <nav class="navbar navbar-expand-lg avyro-navbar">
+    <div class="container">
+      <!-- Mobile Toggle -->
+      <button class="navbar-toggler border-0 shadow-none ps-0" type="button" data-bs-toggle="collapse" data-bs-target="#avyroNav">
+        <i class="bi bi-list fs-2 text-dark"></i>
+      </button>
+
+      <!-- Brand Logo -->
+      <a class="navy-logo navbar-brand me-lg-5" href="{{ url_for('shop.home') }}">
+        AVYRO<span>.</span>
+      </a>
+
+      <div class="collapse navbar-collapse" id="avyroNav">
+        <!-- Left Navigation Links -->
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'shop.home' %}active{% endif %}" href="{{ url_for('shop.home') }}">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'shop.products' and not request.args.get('category') %}active{% endif %}" href="{{ url_for('shop.products') }}">Shop Catalog</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+              Collections
+            </a>
+            <ul class="dropdown-menu border-0 shadow-lg radius-md py-2 bg-white">
+              {% for cat in global_categories %}
+              <li><a class="dropdown-item py-2 px-3 small font-serif fs-6" href="{{ url_for('shop.category_view', slug=cat.slug) }}">{{ cat.name }}</a></li>
+              {% endfor %}
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item py-2 px-3 small fw-bold text-primary" href="{{ url_for('shop.products') }}">Explore All Collections &rarr;</a></li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('shop.products', sort='newest') }}">New Arrivals</a>
+          </li>
+        </ul>
+
+        <!-- Right Action Controls -->
+        <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+          <!-- Search Overlay Trigger Button -->
+          <button class="nav-icon-btn" onclick="openSearchOverlay()" title="Search AVYRO">
+            <i class="bi bi-search fs-6"></i>
+          </button>
+
+          <!-- Wishlist Icon -->
+          <a href="{{ url_for('account.wishlist') }}" class="nav-icon-btn" title="Saved Wishlist">
+            <i class="bi bi-heart fs-6"></i>
+            <span class="nav-badge wishlist-badge-count">{{ global_wishlist_count }}</span>
+          </a>
+
+          <!-- Shopping Cart Icon -->
+          <a href="{{ url_for('cart.view_cart') }}" class="nav-icon-btn" title="Shopping Bag">
+            <i class="bi bi-bag-check fs-6"></i>
+            <span class="nav-badge cart-badge-count">{{ global_cart_count }}</span>
+          </a>
+
+          <!-- User Account / Auth -->
+          {% if current_user.is_authenticated %}
+          <div class="dropdown ms-1">
+            <button class="btn btn-sm btn-avyro-maroon radius-pill px-3 py-2 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+              <i class="bi bi-person me-1"></i> {{ current_user.name.split()[0] }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg radius-md py-2">
+              {% if current_user.is_admin %}
+              <li><a class="dropdown-item py-2 px-3 small fw-bold text-danger" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-speedometer2 me-2"></i> Admin Portal</a></li>
+              <li><hr class="dropdown-divider"></li>
+              {% endif %}
+              <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.account') }}"><i class="bi bi-person-badge me-2"></i> My Account</a></li>
+              <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.account') }}#orders"><i class="bi bi-box-seam me-2"></i> Order History</a></li>
+              <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.wishlist') }}"><i class="bi bi-heart me-2"></i> Saved Items</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item py-2 px-3 small text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i> Sign Out</a></li>
+            </ul>
+          </div>
+          {% else %}
+          <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-avyro-outline py-2 px-3 ms-1">Sign In</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-avyro-maroon py-2 px-3">Join AVYRO</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Search Overlay Modal -->
+  <div id="searchOverlay" class="search-overlay-backdrop">
+    <div class="search-overlay-card">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="text-uppercase text-muted extra-small fw-bold letter-spacing-2 font-serif">SEARCH AVYRO CATALOG</span>
+        <button class="btn btn-sm btn-outline-dark rounded-circle" onclick="closeSearchOverlay()">&times;</button>
+      </div>
+
+      <div class="position-relative mb-4">
+        <input type="text" id="overlaySearchInput" class="form-control form-control-lg radius-md ps-4 pe-5" placeholder="Search by product name, SKU, or keyword..." autocomplete="off">
+        <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
+      </div>
+
+      <div id="overlaySearchResults" class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto;">
+        <div class="text-center py-4 text-muted small">
+          Start typing to discover luxury products, apparel & accessories...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flash Toast Notifications -->
+  <div class="container mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show radius-md shadow-sm border-0 mb-3" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Body Content -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Luxury Editorial Footer -->
+  <footer class="avyro-footer">
+    <div class="container">
+      <div class="row g-4 mb-5">
+        <div class="col-lg-4">
+          <a class="navy-logo text-white fs-2 mb-3 d-inline-block" href="{{ url_for('shop.home') }}">
+            AVYRO<span class="text-warning">.</span>
+          </a>
+          <p class="text-muted small pe-lg-4 lh-lg">
+            Traditional soul meets modern luxury. AVYRO creates carefully engineered physical products and lifestyle gear crafted for refined living.
+          </p>
+          <div class="d-flex gap-2 mt-4">
+            <a href="#" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-instagram"></i></a>
+            <a href="#" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-twitter-x"></i></a>
+            <a href="#" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-facebook"></i></a>
+            <a href="#" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-youtube"></i></a>
+          </div>
+        </div>
+
+        <div class="col-6 col-lg-2">
+          <h6 class="footer-heading">Collections</h6>
+          <ul class="footer-links small">
+            <li><a href="{{ url_for('shop.products') }}">All Catalog</a></li>
+            <li><a href="{{ url_for('shop.products', sort='newest') }}">New Arrivals</a></li>
+            <li><a href="{{ url_for('shop.products', sort='popular') }}">Best Sellers</a></li>
+            <li><a href="{{ url_for('shop.products') }}">Limited Drops</a></li>
+          </ul>
+        </div>
+
+        <div class="col-6 col-lg-2">
+          <h6 class="footer-heading">Concierge</h6>
+          <ul class="footer-links small">
+            <li><a href="#">Contact Concierge</a></li>
+            <li><a href="#">Shipping Policy</a></li>
+            <li><a href="#">Returns & Exchange</a></li>
+            <li><a href="#">Authenticity Guarantee</a></li>
+          </ul>
+        </div>
+
+        <div class="col-6 col-lg-2">
+          <h6 class="footer-heading">Client Services</h6>
+          <ul class="footer-links small">
+            <li><a href="{{ url_for('account.account') }}">My Account</a></li>
+            <li><a href="{{ url_for('account.account') }}">Order Tracking</a></li>
+            <li><a href="{{ url_for('account.wishlist') }}">Saved Items</a></li>
+            <li><a href="{{ url_for('cart.view_cart') }}">Shopping Bag</a></li>
+          </ul>
+        </div>
+
+        <div class="col-6 col-lg-2">
+          <h6 class="footer-heading">Portal</h6>
+          <ul class="footer-links small">
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="{{ url_for('admin.login') }}">Admin Login</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Traditional Motif Divider -->
+      <div class="motif-divider">
+        <span class="motif-icon">◆ ◆ ◆</span>
+      </div>
+
+      <div class="d-flex flex-column flex-md-row align-items-center justify-content-between pt-3 small text-muted">
+        <div>&copy; 2026 AVYRO E-Commerce Inc. All Rights Reserved.</div>
+        <div class="d-flex gap-3 mt-2 mt-md-0">
+          <span class="text-muted extra-small">SECURE ENCRYPTED CHECKOUT</span>
+          <i class="bi bi-shield-check text-warning"></i>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- AVYRO Core JS -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

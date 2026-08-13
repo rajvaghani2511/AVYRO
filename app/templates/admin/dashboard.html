@@ -1,0 +1,230 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Admin Dashboard — AVYRO Control{% endblock %}
+{% block header_title %}Analytics Overview{% endblock %}
+
+{% block content %}
+
+<!-- 6 Stat Cards Grid -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-2">
+    <div class="admin-stat-card">
+      <div>
+        <span class="text-muted extra-small d-block text-uppercase font-serif fw-bold">Total Products</span>
+        <h3 class="fw-bold font-serif mb-0 text-dark">{{ total_products }}</h3>
+      </div>
+      <div class="stat-icon-wrapper bg-light text-dark border"><i class="bi bi-box-seam"></i></div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-2">
+    <div class="admin-stat-card">
+      <div>
+        <span class="text-muted extra-small d-block text-uppercase font-serif fw-bold">Customers</span>
+        <h3 class="fw-bold font-serif mb-0 text-dark">{{ total_customers }}</h3>
+      </div>
+      <div class="stat-icon-wrapper bg-light text-dark border"><i class="bi bi-people"></i></div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-2">
+    <div class="admin-stat-card">
+      <div>
+        <span class="text-muted extra-small d-block text-uppercase font-serif fw-bold">Total Orders</span>
+        <h3 class="fw-bold font-serif mb-0 text-dark">{{ total_orders }}</h3>
+      </div>
+      <div class="stat-icon-wrapper bg-light text-dark border"><i class="bi bi-bag-check"></i></div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="admin-stat-card">
+      <div>
+        <span class="text-muted extra-small d-block text-uppercase font-serif fw-bold">Total Revenue</span>
+        <h3 class="fw-bold font-serif mb-0 text-primary fs-4">{{ total_revenue | currency }}</h3>
+      </div>
+      <div class="stat-icon-wrapper bg-dark text-warning border border-warning"><i class="bi bi-currency-rupee"></i></div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-1.5">
+    <div class="admin-stat-card">
+      <div>
+        <span class="text-muted extra-small d-block text-uppercase font-serif fw-bold">Pending</span>
+        <h3 class="fw-bold font-serif mb-0 text-warning">{{ pending_orders }}</h3>
+      </div>
+      <div class="stat-icon-wrapper bg-warning-subtle text-warning"><i class="bi bi-clock-history"></i></div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-1.5">
+    <div class="admin-stat-card">
+      <div>
+        <span class="text-muted extra-small d-block text-uppercase font-serif fw-bold">Low Stock</span>
+        <h3 class="fw-bold font-serif mb-0 text-danger">{{ low_stock_products }}</h3>
+      </div>
+      <div class="stat-icon-wrapper bg-danger-subtle text-danger"><i class="bi bi-exclamation-triangle"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js Section -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm radius-lg p-4 bg-white">
+      <h6 class="font-serif fw-bold mb-3 border-bottom pb-2">Revenue & Order Volume Trend</h6>
+      <canvas id="salesChart" height="110"></canvas>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm radius-lg p-4 bg-white">
+      <h6 class="font-serif fw-bold mb-3 border-bottom pb-2">Category Distribution</h6>
+      <canvas id="categoryChart" height="230"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Orders & Low Stock Tables -->
+<div class="row g-4">
+  <!-- Recent Orders Table -->
+  <div class="col-lg-7">
+    <div class="avyro-table-card">
+      <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-sand">
+        <h6 class="font-serif fw-bold mb-0">Recent Orders</h6>
+        <a href="{{ url_for('admin.orders') }}" class="extra-small fw-semibold text-primary">View All &rarr;</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table avyro-table">
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in recent_orders %}
+            <tr>
+              <td class="fw-bold text-primary font-serif">{{ o.order_number }}</td>
+              <td>{{ o.shipping_name }}</td>
+              <td class="fw-bold font-serif">{{ o.total_amount | currency }}</td>
+              <td>
+                <span class="badge-status badge-status-{{ o.order_status.lower() }}">{{ o.order_status }}</span>
+              </td>
+              <td>
+                <a href="{{ url_for('admin.order_detail', id=o.id) }}" class="btn btn-sm btn-outline-dark py-0 px-2 extra-small">View</a>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-3">No orders recorded yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Low Stock Products List -->
+  <div class="col-lg-5">
+    <div class="avyro-table-card">
+      <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-sand">
+        <h6 class="font-serif fw-bold mb-0 text-danger"><i class="bi bi-exclamation-triangle me-1"></i> Low Stock Alerts</h6>
+        <a href="{{ url_for('admin.products') }}" class="extra-small fw-semibold text-primary">Inventory &rarr;</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table avyro-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th>Stock</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in low_stock_list %}
+            <tr>
+              <td>
+                <div class="fw-semibold text-dark text-truncate" style="max-width: 140px;">{{ p.name }}</div>
+              </td>
+              <td class="extra-small text-muted">{{ p.sku }}</td>
+              <td>
+                <span class="badge bg-danger px-2 radius-pill">{{ p.stock }} left</span>
+              </td>
+              <td>
+                <a href="{{ url_for('admin.edit_product', id=p.id) }}" class="btn btn-sm btn-outline-primary py-0 px-2 extra-small">Edit Stock</a>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted py-3">All inventory stock levels healthy!</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Chart 1: Revenue Line Chart
+  const salesCtx = document.getElementById('salesChart').getContext('2d');
+  new Chart(salesCtx, {
+    type: 'line',
+    data: {
+      labels: {{ chart_months | tojson }},
+      datasets: [
+        {
+          label: 'Revenue (₹)',
+          data: {{ chart_revenue | tojson }},
+          borderColor: '#5C1D24',
+          backgroundColor: 'rgba(92, 29, 36, 0.08)',
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Orders Count',
+          data: {{ chart_orders | tojson }},
+          borderColor: '#B08A4A',
+          backgroundColor: 'transparent',
+          borderDash: [5, 5],
+          tension: 0.3,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { type: 'linear', position: 'left', title: { display: true, text: 'Revenue (₹)' } },
+        y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Orders' } }
+      }
+    }
+  });
+
+  // Chart 2: Category Distribution Doughnut Chart
+  const catCtx = document.getElementById('categoryChart').getContext('2d');
+  new Chart(catCtx, {
+    type: 'doughnut',
+    data: {
+      labels: {{ cat_names | tojson }},
+      datasets: [{
+        data: {{ cat_counts | tojson }},
+        backgroundColor: ['#5C1D24', '#A6533F', '#B08A4A', '#1F382B', '#7A6F66', '#3A2E25']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+});
+</script>
+{% endblock %}

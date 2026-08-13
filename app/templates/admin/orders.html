@@ -1,0 +1,61 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Orders Manager — AVYRO Admin{% endblock %}
+{% block header_title %}Orders Management{% endblock %}
+
+{% block content %}
+
+<!-- Order Status Filter Pills -->
+<div class="d-flex flex-wrap gap-2 mb-4">
+  <a href="{{ url_for('admin.orders') }}" class="btn btn-sm {% if not status_filter %}btn-dark{% else %}btn-outline-dark{% endif %} radius-pill px-3">All Orders</a>
+  <a href="{{ url_for('admin.orders', status='Pending') }}" class="btn btn-sm {% if status_filter == 'Pending' %}btn-dark{% else %}btn-outline-dark{% endif %} radius-pill px-3">Pending</a>
+  <a href="{{ url_for('admin.orders', status='Processing') }}" class="btn btn-sm {% if status_filter == 'Processing' %}btn-dark{% else %}btn-outline-dark{% endif %} radius-pill px-3">Processing</a>
+  <a href="{{ url_for('admin.orders', status='Shipped') }}" class="btn btn-sm {% if status_filter == 'Shipped' %}btn-dark{% else %}btn-outline-dark{% endif %} radius-pill px-3">Shipped</a>
+  <a href="{{ url_for('admin.orders', status='Delivered') }}" class="btn btn-sm {% if status_filter == 'Delivered' %}btn-dark{% else %}btn-outline-dark{% endif %} radius-pill px-3">Delivered</a>
+  <a href="{{ url_for('admin.orders', status='Cancelled') }}" class="btn btn-sm {% if status_filter == 'Cancelled' %}btn-dark{% else %}btn-outline-dark{% endif %} radius-pill px-3">Cancelled</a>
+</div>
+
+<!-- Orders List Table -->
+<div class="avyro-table-card">
+  <div class="table-responsive">
+    <table class="table avyro-table">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Customer</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Payment</th>
+          <th>Order Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+        <tr>
+          <td class="fw-bold font-serif text-primary fs-6">{{ o.order_number }}</td>
+          <td>
+            <strong class="d-block text-dark font-serif">{{ o.shipping_name }}</strong>
+            <span class="text-muted extra-small">{{ o.shipping_email }}</span>
+          </td>
+          <td class="small">{{ o.created_at.strftime('%b %d, %Y') }}</td>
+          <td class="fw-bold font-serif">{{ o.total_amount | currency }}</td>
+          <td>
+            <span class="badge bg-light text-dark border">{{ o.payment_status }}</span>
+          </td>
+          <td>
+            <span class="badge-status badge-status-{{ o.order_status.lower() }}">{{ o.order_status }}</span>
+          </td>
+          <td class="text-end">
+            <a href="{{ url_for('admin.order_detail', id=o.id) }}" class="btn btn-sm btn-outline-primary py-0 px-2 extra-small">Manage Order</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No orders match filter criteria.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

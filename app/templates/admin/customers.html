@@ -1,0 +1,51 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Customers Directory — AVYRO Admin{% endblock %}
+{% block header_title %}Customers Directory{% endblock %}
+
+{% block content %}
+
+<div class="avyro-table-card">
+  <div class="table-responsive">
+    <table class="table avyro-table">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>Registered Date</th>
+          <th>Total Orders</th>
+          <th>Total Spent</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-3">
+              <div class="bg-maroon text-white rounded-circle d-flex align-items-center justify-content-center fw-bold font-serif small" style="width: 38px; height: 38px; background: var(--avyro-maroon);">
+                {{ c.name[0].upper() }}
+              </div>
+              <div>
+                <strong class="d-block font-serif text-dark fs-6">{{ c.name }}</strong>
+                <span class="text-muted extra-small">{{ c.email }}</span>
+              </div>
+            </div>
+          </td>
+          <td class="small">{{ c.phone or 'Not provided' }}</td>
+          <td class="small">{{ c.created_at.strftime('%b %d, %Y') }}</td>
+          <td>
+            <span class="badge bg-light text-dark border px-2 radius-pill">{{ stats[c.id].order_count }} orders</span>
+          </td>
+          <td class="fw-bold font-serif text-primary">
+            {{ stats[c.id].total_spent | currency }}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No registered customers yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

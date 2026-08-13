@@ -1,0 +1,81 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Category Management — AVYRO Admin{% endblock %}
+{% block header_title %}Categories Management{% endblock %}
+
+{% block content %}
+
+<div class="row g-4">
+  <!-- Add Category Form -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm radius-lg p-4 bg-white">
+      <h6 class="font-serif fw-bold mb-3 border-bottom pb-2 fs-5">Add New Category</h6>
+      <form action="{{ url_for('admin.categories') }}" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="action" value="add">
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Category Name *</label>
+          <input type="text" name="name" class="form-control" placeholder="e.g. Smart Wearables" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Description</label>
+          <textarea name="description" class="form-control" rows="3" placeholder="Category brief overview..."></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label small fw-semibold">Category Image</label>
+          <input type="file" name="image" class="form-control" accept="image/*">
+        </div>
+
+        <button type="submit" class="btn btn-avyro btn-avyro-maroon w-100 py-2 font-serif">Add Category</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Categories List Table -->
+  <div class="col-lg-8">
+    <div class="avyro-table-card">
+      <div class="table-responsive">
+        <table class="table avyro-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Slug</th>
+              <th>Products</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cat in categories %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-3">
+                  <img src="{{ url_for('static', filename='uploads/' + cat.image) }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100'">
+                  <div>
+                    <strong class="d-block font-serif text-dark fs-6">{{ cat.name }}</strong>
+                    <span class="text-muted extra-small">{{ cat.description or 'No description' }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="extra-small font-monospace">{{ cat.slug }}</td>
+              <td>
+                <span class="badge bg-primary px-2 radius-pill">{{ cat.products|length }} products</span>
+              </td>
+              <td class="text-end">
+                <form action="{{ url_for('admin.delete_category', id=cat.id) }}" method="POST" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2 extra-small" onclick="return confirm('Delete category {{ cat.name }}?');">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted py-3">No categories available.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Order #{{ order.order_number }} — AVYRO Admin{% endblock %}
+{% block header_title %}Order Detail #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+
+<div class="mb-3">
+  <a href="{{ url_for('admin.orders') }}" class="text-primary small fw-semibold">&larr; Back to Orders List</a>
+</div>
+
+<div class="row g-4">
+  <!-- Left Column: Items & Shipping -->
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm radius-lg p-4 mb-4 bg-white">
+      <h6 class="font-serif fw-bold mb-3 border-bottom pb-2 fs-5">Order Line Items ({{ order.items|length }})</h6>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr class="small text-muted font-serif">
+              <th>Product Item</th>
+              <th>Price</th>
+              <th>Qty</th>
+              <th class="text-end">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in order.items %}
+            <tr>
+              <td>
+                <strong class="d-block font-serif text-dark fs-6">{{ item.product_name }}</strong>
+                {% if item.product %}
+                <span class="text-muted extra-small">SKU: {{ item.product.sku }}</span>
+                {% endif %}
+              </td>
+              <td>{{ item.price | currency }}</td>
+              <td>{{ item.quantity }}</td>
+              <td class="text-end fw-bold font-serif">{{ item.subtotal | currency }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Shipping Address -->
+    <div class="card border-0 shadow-sm radius-lg p-4 bg-white">
+      <h6 class="font-serif fw-bold mb-3 border-bottom pb-2 fs-5">Shipping Destination</h6>
+      <p class="mb-1 fw-bold text-dark font-serif fs-6">{{ order.shipping_name }}</p>
+      <p class="text-muted small mb-1">{{ order.shipping_address }}</p>
+      <p class="text-muted small mb-2">{{ order.shipping_city }}, {{ order.shipping_state }} - {{ order.shipping_pincode }}, {{ order.shipping_country }}</p>
+      <p class="text-muted extra-small mb-0">Phone: {{ order.shipping_phone }} | Email: {{ order.shipping_email }}</p>
+    </div>
+  </div>
+
+  <!-- Right Column: Status Update & Summary -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm radius-lg p-4 mb-4 bg-white">
+      <h6 class="font-serif fw-bold mb-3 border-bottom pb-2 fs-5">Update Fulfillment Status</h6>
+      
+      <form action="{{ url_for('admin.order_detail', id=order.id) }}" method="POST">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Order Lifecycle Status</label>
+          <select name="order_status" class="form-select">
+            <option value="Pending" {% if order.order_status == 'Pending' %}selected{% endif %}>Pending</option>
+            <option value="Confirmed" {% if order.order_status == 'Confirmed' %}selected{% endif %}>Confirmed</option>
+            <option value="Processing" {% if order.order_status == 'Processing' %}selected{% endif %}>Processing</option>
+            <option value="Shipped" {% if order.order_status == 'Shipped' %}selected{% endif %}>Shipped</option>
+            <option value="Delivered" {% if order.order_status == 'Delivered' %}selected{% endif %}>Delivered</option>
+            <option value="Cancelled" {% if order.order_status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label small fw-semibold">Payment Status</label>
+          <select name="payment_status" class="form-select">
+            <option value="Pending (COD)" {% if order.payment_status == 'Pending (COD)' or order.payment_status == 'Pending' %}selected{% endif %}>Pending (COD)</option>
+            <option value="Paid" {% if order.payment_status == 'Paid' or order.payment_status == 'Completed' %}selected{% endif %}>Paid / Authorized</option>
+            <option value="Failed" {% if order.payment_status == 'Failed' %}selected{% endif %}>Failed</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-avyro btn-avyro-maroon w-100 py-2 font-serif">Update Status</button>
+      </form>
+    </div>
+
+    <!-- Summary -->
+    <div class="card border-0 shadow-sm radius-lg p-4 bg-white">
+      <h6 class="font-serif fw-bold mb-3 border-bottom pb-2 fs-5">Payment Summary</h6>
+      <div class="d-flex justify-content-between mb-2 small">
+        <span class="text-muted">Subtotal</span>
+        <span class="font-serif">{{ (order.total_amount - order.shipping_amount) | currency }}</span>
+      </div>
+      <div class="d-flex justify-content-between mb-2 small">
+        <span class="text-muted">Shipping</span>
+        <span class="font-serif">{{ order.shipping_amount | currency }}</span>
+      </div>
+      <hr>
+      <div class="d-flex justify-content-between">
+        <span class="fw-bold font-serif fs-5">Grand Total</span>
+        <strong class="text-primary font-serif fs-4">{{ order.total_amount | currency }}</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account — AVYRO{% endblock %}
+
+{% block content %}
+
+<div class="container py-5 my-4">
+  <div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+      <div class="card border-0 shadow-lg radius-xl p-4 p-md-5 bg-white border border-warning">
+        <div class="text-center mb-4">
+          <a class="navy-logo fs-1 mb-2 d-inline-block" href="{{ url_for('shop.home') }}">
+            AVYRO<span>.</span>
+          </a>
+          <h3 class="font-serif fw-bold text-dark">Join AVYRO</h3>
+          <p class="text-muted small">Register to experience handcrafted luxury and concierge tracking.</p>
+        </div>
+
+        <form action="{{ url_for('auth.register') }}" method="POST">
+          <div class="row g-3 mb-3">
+            <div class="col-12">
+              <label class="form-label small fw-semibold text-muted">Full Name *</label>
+              <input type="text" name="name" class="form-control radius-md" placeholder="e.g. Vikramaditya Sen" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Email Address *</label>
+              <input type="email" name="email" class="form-control radius-md" placeholder="name@example.com" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Phone Number</label>
+              <input type="tel" name="phone" class="form-control radius-md" placeholder="+91 98765 43210">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Password *</label>
+              <input type="password" name="password" class="form-control radius-md" placeholder="Min 6 characters" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Confirm Password *</label>
+              <input type="password" name="confirm_password" class="form-control radius-md" placeholder="Repeat password" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-avyro btn-avyro-maroon w-100 py-3 font-serif fw-bold mb-3">
+            CREATE MY ACCOUNT &rarr;
+          </button>
+
+          <p class="text-center text-muted small mb-0">
+            Already registered? <a href="{{ url_for('auth.login') }}" class="fw-bold text-primary font-serif">Sign In</a>
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

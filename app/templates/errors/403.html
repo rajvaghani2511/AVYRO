@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Access Denied — AVYRO{% endblock %}
+
+{% block content %}
+<div class="container py-5 my-5 text-center">
+  <div class="max-w-600 mx-auto">
+    <h1 class="display-1 fw-extrabold text-danger font-heading">403</h1>
+    <h3 class="fw-bold mb-3">Access Denied</h3>
+    <p class="text-muted mb-4">You do not have the required permissions to access this control portal route.</p>
+    <a href="{{ url_for('shop.home') }}" class="btn btn-avyro btn-avyro-accent px-4 py-3">Return to Storefront</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Bag — AVYRO{% endblock %}
+
+{% block content %}
+
+<div class="bg-dark text-white py-4 border-bottom border-warning mb-4">
+  <div class="container">
+    <h1 class="h3 font-serif fw-bold text-white mb-1"><i class="bi bi-bag-check me-2 text-warning"></i> Your Shopping Bag</h1>
+    <p class="text-light opacity-75 small mb-0">Review your selected items before proceeding to secure checkout.</p>
+  </div>
+</div>
+
+<div class="container mb-5">
+  {% if cart and cart.items %}
+  <div class="row g-4" id="cartContentRow">
+    <!-- Items List -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm radius-lg p-4 bg-white">
+        <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom">
+          <h6 class="font-serif fw-bold mb-0 text-dark fs-5">Bag Items ({{ cart.total_items }})</h6>
+          <a href="{{ url_for('shop.products') }}" class="text-primary small fw-semibold">&larr; Continue Browsing</a>
+        </div>
+
+        <div class="d-flex flex-column gap-3">
+          {% for item in cart.items %}
+          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 p-3 border radius-md bg-white cart-item-row" id="cart-item-{{ item.id }}">
+            <!-- Product Image & Details -->
+            <div class="d-flex align-items-center gap-3">
+              <img src="{{ url_for('static', filename='uploads/' + item.product.main_image) }}" alt="{{ item.product.name }}" class="rounded" style="width: 76px; height: 76px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200'">
+              <div>
+                <a href="{{ url_for('shop.product_detail', slug=item.product.slug) }}" class="fw-bold font-serif fs-6 text-dark text-decoration-none d-block">{{ item.product.name }}</a>
+                <span class="text-muted extra-small">SKU: {{ item.product.sku }} | Price: {{ item.product.effective_price | currency }}</span>
+              </div>
+            </div>
+
+            <!-- Quantity & Actions -->
+            <div class="d-flex align-items-center justify-content-between justify-content-sm-end gap-4">
+              <!-- Quantity Controller -->
+              <div class="quantity-control">
+                <button class="btn-qty" onclick="changeCartQty({{ item.id }}, {{ item.quantity - 1 }})">-</button>
+                <input type="number" class="qty-input" value="{{ item.quantity }}" readonly>
+                <button class="btn-qty" onclick="changeCartQty({{ item.id }}, {{ item.quantity + 1 }})">+</button>
+              </div>
+
+              <!-- Item Subtotal -->
+              <div class="text-end" style="min-width: 100px;">
+                <span class="fw-bold text-primary font-serif fs-5 d-block" id="subtotal-{{ item.id }}">{{ item.subtotal | currency }}</span>
+              </div>
+
+              <!-- Remove Button -->
+              <button class="btn btn-sm btn-outline-danger border-0 rounded-circle" onclick="removeItem({{ item.id }})" title="Remove item">
+                <i class="bi bi-trash fs-6"></i>
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Summary Sidebar -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm radius-lg p-4 bg-white sticky-top" style="top: 90px;">
+        <h5 class="font-serif fw-bold mb-4 border-bottom pb-3">Order Summary</h5>
+
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-secondary">Subtotal</span>
+          <strong class="text-dark font-serif" id="summarySubtotal">{{ subtotal | currency }}</strong>
+        </div>
+
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-secondary">Estimated Shipping</span>
+          <strong class="text-dark font-serif" id="summaryShipping">
+            {% if shipping == 0 %}
+            <span class="text-success">FREE</span>
+            {% else %}
+            {{ shipping | currency }}
+            {% endif %}
+          </strong>
+        </div>
+
+        <div class="mb-3">
+          {% if subtotal < 1000 %}
+          <div class="progress" style="height: 6px;">
+            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ (subtotal / 1000) * 100 }}%;"></div>
+          </div>
+          <span class="extra-small text-muted mt-1 d-block">Add {{ (1000 - subtotal) | currency }} more for FREE Shipping!</span>
+          {% else %}
+          <span class="badge bg-success-subtle text-success border border-success-subtle w-100 py-2">
+            <i class="bi bi-check-circle-fill me-1"></i> You qualify for FREE Express Shipping!
+          </span>
+          {% endif %}
+        </div>
+
+        <hr class="my-3">
+
+        <div class="d-flex justify-content-between mb-4">
+          <span class="fs-5 font-serif fw-bold">Grand Total</span>
+          <strong class="fs-3 text-primary font-serif" id="summaryGrandTotal">{{ grand_total | currency }}</strong>
+        </div>
+
+        <!-- Promo Box -->
+        <div class="input-group mb-4">
+          <input type="text" class="form-control form-control-sm" placeholder="Promo code...">
+          <button class="btn btn-sm btn-outline-dark" type="button" onclick="showToast('Promo code applied!', 'info')">Apply</button>
+        </div>
+
+        <a href="{{ url_for('orders.checkout') }}" class="btn btn-avyro btn-avyro-maroon w-100 py-3 font-serif fw-bold fs-6">
+          PROCEED TO CHECKOUT &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <!-- Empty Cart State -->
+  <div class="card border-0 shadow-sm radius-lg p-5 text-center my-4 bg-white">
+    <div class="mb-3 text-muted">
+      <i class="bi bi-bag-x fs-1"></i>
+    </div>
+    <h3 class="font-serif fw-bold text-dark">Your Shopping Bag is Empty</h3>
+    <p class="text-muted">Discover our curated collections of luxury items and everyday essentials.</p>
+    <div class="mt-4">
+      <a href="{{ url_for('shop.products') }}" class="btn btn-avyro btn-avyro-maroon px-5 py-3">
+        EXPLORE CATALOG &rarr;
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function changeCartQty(itemId, newQty) {
+  fetch('/api/cart/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ item_id: itemId, quantity: parseInt(newQty) })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      if (data.removed) {
+        document.getElementById(`cart-item-${itemId}`).remove();
+        if (data.cart_count === 0) window.location.reload();
+      } else {
+        document.getElementById(`subtotal-${itemId}`).innerText = `₹${data.item_subtotal.toFixed(2)}`;
+      }
+
+      document.getElementById('summarySubtotal').innerText = `₹${data.subtotal.toFixed(2)}`;
+      document.getElementById('summaryShipping').innerText = data.shipping === 0 ? 'FREE' : `₹${data.shipping.toFixed(2)}`;
+      document.getElementById('summaryGrandTotal').innerText = `₹${data.grand_total.toFixed(2)}`;
+
+      const badges = document.querySelectorAll('.cart-badge-count');
+      badges.forEach(b => { b.innerText = data.cart_count; });
+    } else {
+      showToast(data.message, 'danger');
+    }
+  });
+}
+
+function removeItem(itemId) {
+  changeCartQty(itemId, 0);
+}
+</script>
+{% endblock %}

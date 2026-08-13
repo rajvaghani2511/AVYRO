@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} — AVYRO{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb Header -->
+<div class="bg-sand py-3 border-bottom mb-4">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small font-serif">
+        <li class="breadcrumb-item"><a href="{{ url_for('shop.home') }}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('shop.products') }}">Shop</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('shop.category_view', slug=product.category.slug) }}">{{ product.category.name }}</a></li>
+        <li class="breadcrumb-item active text-truncate" style="max-width: 240px;" aria-current="page">{{ product.name }}</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container mb-5">
+  <div class="row g-5">
+    <!-- Image Gallery Column -->
+    <div class="col-lg-6">
+      <div class="product-gallery-main">
+        <img id="mainGalleryImage" src="{{ url_for('static', filename='uploads/' + product.main_image) }}" alt="{{ product.name }}" onerror="this.src='https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800'">
+      </div>
+
+      <!-- Multi-image Thumbnails -->
+      {% if product.images|length > 1 %}
+      <div class="thumbnail-slider">
+        {% for img in product.images %}
+        <div class="thumb-item {% if loop.first %}active{% endif %}" data-src="{{ url_for('static', filename='uploads/' + img.image_path) }}">
+          <img src="{{ url_for('static', filename='uploads/' + img.image_path) }}" alt="{{ product.name }}" onerror="this.src='https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200'">
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Product Info Details -->
+    <div class="col-lg-6">
+      <div class="ps-lg-3">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge bg-dark text-warning border border-warning px-3 py-1 radius-pill text-uppercase extra-small">{{ product.brand or 'AVYRO' }}</span>
+          <span class="text-muted extra-small">SKU: {{ product.sku }}</span>
+        </div>
+
+        <h1 class="font-serif display-6 fw-bold text-dark mb-3">{{ product.name }}</h1>
+
+        <!-- Rating & Reviews -->
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="text-warning small">
+            <i class="bi bi-star-fill"></i>
+            <i class="bi bi-star-fill"></i>
+            <i class="bi bi-star-fill"></i>
+            <i class="bi bi-star-fill"></i>
+            <i class="bi bi-star-fill"></i>
+          </div>
+          <span class="fw-bold small font-serif">4.9 / 5.0</span>
+          <span class="text-muted small">(48 Customer Reviews)</span>
+        </div>
+
+        <!-- Pricing Block -->
+        <div class="d-flex align-items-baseline gap-3 mb-4 p-3 bg-white radius-md border border-warning">
+          <span class="fs-1 fw-bold text-primary font-serif">{{ product.effective_price | currency }}</span>
+          {% if product.sale_price and product.sale_price < product.price %}
+          <span class="fs-5 text-muted text-decoration-line-through font-serif">{{ product.price | currency }}</span>
+          <span class="badge bg-danger text-white px-2 py-1 radius-pill extra-small">SAVE {{ product.discount_percentage }}%</span>
+          {% endif %}
+        </div>
+
+        <!-- Stock Availability -->
+        <div class="mb-4">
+          {% if product.stock > 0 %}
+          <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 radius-pill">
+            <i class="bi bi-check-circle-fill me-1"></i> In Stock ({{ product.stock }} units left)
+          </span>
+          {% else %}
+          <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 radius-pill">
+            <i class="bi bi-x-circle-fill me-1"></i> Currently Out of Stock
+          </span>
+          {% endif %}
+        </div>
+
+        <p class="text-secondary mb-4 lh-lg">{{ product.short_description or product.description }}</p>
+
+        <!-- Product Specs Quick View -->
+        <div class="row g-3 mb-4 border-top border-bottom py-3">
+          {% if product.weight %}
+          <div class="col-6">
+            <span class="text-muted small d-block">Weight:</span>
+            <strong class="small text-dark font-serif fs-6">{{ product.weight }}</strong>
+          </div>
+          {% endif %}
+          {% if product.dimensions %}
+          <div class="col-6">
+            <span class="text-muted small d-block">Dimensions:</span>
+            <strong class="small text-dark font-serif fs-6">{{ product.dimensions }}</strong>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Action Controls -->
+        {% if product.stock > 0 %}
+        <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+          <!-- Quantity Selector -->
+          <div class="quantity-control">
+            <button class="btn-qty btn-qty-minus" type="button">-</button>
+            <input type="number" id="productDetailQty" class="qty-input" value="1" min="1" max="{{ product.stock }}" readonly>
+            <button class="btn-qty btn-qty-plus" type="button">+</button>
+          </div>
+
+          <!-- Add to Cart -->
+          <button class="btn btn-avyro btn-avyro-maroon px-4 py-3 flex-grow-1" onclick="addToCart({{ product.id }}, document.getElementById('productDetailQty').value)">
+            <i class="bi bi-bag-plus fs-5"></i> ADD TO CART
+          </button>
+
+          <!-- Wishlist Toggle -->
+          <button class="btn btn-outline-dark p-3 radius-pill {% if is_in_wishlist %}active text-danger{% endif %}" onclick="toggleWishlist({{ product.id }}, this)" title="Save to Wishlist">
+            <i class="bi {% if is_in_wishlist %}bi-heart-fill text-danger{% else %}bi-heart{% endif %} fs-5"></i>
+          </button>
+        </div>
+
+        <!-- Buy Now Action -->
+        <button class="btn btn-avyro btn-avyro-brass w-100 py-3 mb-4" onclick="addToCart({{ product.id }}, document.getElementById('productDetailQty').value); window.location.href='/cart';">
+          BUY NOW &rarr;
+        </button>
+        {% endif %}
+
+        <!-- Guarantee Pills -->
+        <div class="d-flex align-items-center justify-content-between p-3 bg-white border radius-md small text-muted">
+          <div><i class="bi bi-shield-check text-primary me-1"></i> 2-Year Warranty</div>
+          <div><i class="bi bi-truck text-primary me-1"></i> Express Shipping</div>
+          <div><i class="bi bi-arrow-counterclockwise text-primary me-1"></i> 7-Day Returns</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Information Tabs -->
+  <div class="row mt-5">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm radius-lg p-4 bg-white">
+        <ul class="nav nav-tabs border-bottom mb-4" id="productDetailTabs" role="tablist">
+          <li class="nav-item">
+            <button class="nav-link active font-serif fs-5 fw-bold text-dark" id="desc-tab" data-bs-toggle="tab" data-bs-target="#desc-pane">Full Description</button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link font-serif fs-5 fw-bold text-dark" id="specs-tab" data-bs-toggle="tab" data-bs-target="#specs-pane">Specifications</button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link font-serif fs-5 fw-bold text-dark" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews-pane">Customer Reviews (48)</button>
+          </li>
+        </ul>
+
+        <div class="tab-content" id="productTabContent">
+          <!-- Description Tab -->
+          <div class="tab-pane fade show active" id="desc-pane">
+            <div class="lh-lg text-secondary">
+              {{ product.description | replace('\n', '<br>') | safe }}
+            </div>
+          </div>
+
+          <!-- Specs Tab -->
+          <div class="tab-pane fade" id="specs-pane">
+            <table class="table table-striped table-bordered radius-md">
+              <tbody>
+                <tr>
+                  <th style="width: 30%;">Brand</th>
+                  <td>{{ product.brand or 'AVYRO' }}</td>
+                </tr>
+                <tr>
+                  <th>SKU Code</th>
+                  <td>{{ product.sku }}</td>
+                </tr>
+                <tr>
+                  <th>Category</th>
+                  <td>{{ product.category.name }}</td>
+                </tr>
+                <tr>
+                  <th>Weight</th>
+                  <td>{{ product.weight or 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <th>Dimensions</th>
+                  <td>{{ product.dimensions or 'N/A' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Reviews Tab -->
+          <div class="tab-pane fade" id="reviews-pane">
+            <div class="row g-4">
+              <div class="col-md-4 text-center border-end">
+                <h1 class="display-3 fw-bold text-primary font-serif">4.9</h1>
+                <div class="text-warning mb-2">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                </div>
+                <p class="text-muted small">Based on 48 verified customer ratings</p>
+              </div>
+
+              <div class="col-md-8">
+                <div class="border-bottom pb-3 mb-3">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <strong class="text-dark font-serif">Arjun V.</strong>
+                    <span class="text-muted extra-small">2 days ago</span>
+                  </div>
+                  <div class="text-warning small mb-1"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                  <p class="text-secondary small mb-0">Exceptional build quality. Delivered in pristine packaging within 48 hours!</p>
+                </div>
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <strong class="text-dark font-serif">Neha Sharma</strong>
+                    <span class="text-muted extra-small">1 week ago</span>
+                  </div>
+                  <div class="text-warning small mb-1"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                  <p class="text-secondary small mb-0">The AVYRO design aesthetic is top tier. Fits into my modern desk setup seamlessly.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products -->
+  {% if related_products %}
+  <div class="mt-5 pt-4 border-top">
+    <h3 class="font-serif fw-bold mb-4">You May Also Like</h3>
+    <div class="row g-4">
+      {% for rel in related_products %}
+      <div class="col-6 col-md-3">
+        <div class="product-card">
+          <div class="product-card-img-wrap">
+            <a href="{{ url_for('shop.product_detail', slug=rel.slug) }}">
+              <img src="{{ url_for('static', filename='uploads/' + rel.main_image) }}" alt="{{ rel.name }}" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'">
+            </a>
+          </div>
+          <div class="product-card-body">
+            <a href="{{ url_for('shop.product_detail', slug=rel.slug) }}" class="product-title">{{ rel.name }}</a>
+            <div class="product-price-wrap">
+              <span class="price-current">{{ rel.effective_price | currency }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

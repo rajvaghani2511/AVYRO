@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Order Confirmed — AVYRO{% endblock %}
+
+{% block content %}
+
+<div class="container py-5 my-3">
+  <div class="max-w-700 mx-auto">
+    <div class="card border-0 shadow-lg radius-xl p-4 p-md-5 text-center bg-white">
+      <div class="mx-auto mb-4 text-success" style="width: 76px; height: 76px; border-radius: 50%; background: #D1FAE5; display: flex; align-items: center; justify-content: center;">
+        <i class="bi bi-check-circle-fill display-4"></i>
+      </div>
+
+      <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 radius-pill mb-2 align-self-center">ORDER PLACED SUCCESSFULLY</span>
+      <h2 class="fw-bold text-dark font-heading mb-2">Thank You for Your Order!</h2>
+      <p class="text-muted mb-4">We've received your request. Your order reference code is <strong class="text-primary font-heading fs-5">{{ order.order_number }}</strong>.</p>
+
+      <div class="p-4 bg-light radius-lg text-start mb-4">
+        <h6 class="fw-bold border-bottom pb-2 mb-3">Order Receipt Details</h6>
+        <div class="row g-3 small">
+          <div class="col-6">
+            <span class="text-muted d-block">Order Date:</span>
+            <strong>{{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</strong>
+          </div>
+          <div class="col-6">
+            <span class="text-muted d-block">Payment Status:</span>
+            <span class="badge bg-warning text-dark">{{ order.payment_status }}</span>
+          </div>
+          <div class="col-6">
+            <span class="text-muted d-block">Order Status:</span>
+            <span class="badge bg-info text-white">{{ order.order_status }}</span>
+          </div>
+          <div class="col-6">
+            <span class="text-muted d-block">Total Paid:</span>
+            <strong class="text-primary font-heading fs-6">{{ order.total_amount | currency }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 border radius-lg text-start mb-4">
+        <h6 class="fw-bold border-bottom pb-2 mb-3">Shipping Destination</h6>
+        <p class="mb-1 fw-bold text-dark">{{ order.shipping_name }}</p>
+        <p class="text-muted small mb-1">{{ order.shipping_address }}, {{ order.shipping_city }}, {{ order.shipping_state }} - {{ order.shipping_pincode }}</p>
+        <p class="text-muted small mb-0">Phone: {{ order.shipping_phone }} | Email: {{ order.shipping_email }}</p>
+      </div>
+
+      <div class="d-flex flex-wrap justify-content-center gap-3">
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('account.account') }}" class="btn btn-avyro btn-avyro-outline px-4 py-3">View Order History</a>
+        {% endif %}
+        <a href="{{ url_for('shop.products') }}" class="btn btn-avyro btn-avyro-accent px-4 py-3">Continue Shopping</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

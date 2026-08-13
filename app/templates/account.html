@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}My Client Account — AVYRO{% endblock %}
+
+{% block content %}
+
+<div class="bg-dark text-white py-4 border-bottom border-warning mb-4">
+  <div class="container">
+    <div class="d-flex align-items-center gap-3">
+      <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold font-serif fs-2" style="width: 60px; height: 60px; border: 2px solid var(--avyro-brass);">
+        {{ current_user.name[0].upper() }}
+      </div>
+      <div>
+        <h1 class="h3 font-serif fw-bold text-white mb-0">Client Dashboard — {{ current_user.name }}</h1>
+        <p class="text-light opacity-75 small mb-0">{{ current_user.email }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container mb-5">
+  <div class="row g-4">
+    <!-- Sidebar Navigation -->
+    <div class="col-lg-3">
+      <div class="card border-0 shadow-sm radius-lg p-3 bg-white">
+        <div class="nav flex-column nav-pills gap-1" id="v-pills-tab" role="tablist">
+          <button class="nav-link active text-start py-2.5 px-3 font-serif fw-semibold" id="tab-overview-btn" data-bs-toggle="pill" data-bs-target="#tab-overview">
+            <i class="bi bi-grid-1x2 me-2"></i> Account Overview
+          </button>
+          <button class="nav-link text-start py-2.5 px-3 font-serif fw-semibold" id="tab-orders-btn" data-bs-toggle="pill" data-bs-target="#tab-orders">
+            <i class="bi bi-box-seam me-2"></i> My Orders ({{ orders|length }})
+          </button>
+          <button class="nav-link text-start py-2.5 px-3 font-serif fw-semibold" id="tab-addresses-btn" data-bs-toggle="pill" data-bs-target="#tab-addresses">
+            <i class="bi bi-geo-alt me-2"></i> Saved Addresses ({{ addresses|length }})
+          </button>
+          <a href="{{ url_for('account.wishlist') }}" class="nav-link text-start py-2.5 px-3 font-serif fw-semibold">
+            <i class="bi bi-heart me-2"></i> My Wishlist ({{ wishlist_count }})
+          </a>
+          <hr class="my-2">
+          <a href="{{ url_for('auth.logout') }}" class="nav-link text-start py-2.5 px-3 font-serif fw-semibold text-danger">
+            <i class="bi bi-box-arrow-right me-2"></i> Sign Out
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="col-lg-9">
+      <div class="tab-content" id="v-pills-tabContent">
+        
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="tab-overview">
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="card border-0 shadow-sm radius-md p-3 bg-white border-start border-4 border-primary">
+                <span class="text-muted small">Total Orders</span>
+                <h3 class="fw-bold font-serif mb-0 text-dark">{{ orders|length }}</h3>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 shadow-sm radius-md p-3 bg-white border-start border-4 border-warning">
+                <span class="text-muted small">Saved Items</span>
+                <h3 class="fw-bold font-serif mb-0 text-dark">{{ wishlist_count }}</h3>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 shadow-sm radius-md p-3 bg-white border-start border-4 border-success">
+                <span class="text-muted small">Saved Addresses</span>
+                <h3 class="fw-bold font-serif mb-0 text-dark">{{ addresses|length }}</h3>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Info Form -->
+          <div class="card border-0 shadow-sm radius-lg p-4 bg-white">
+            <h5 class="font-serif fw-bold mb-3 border-bottom pb-2">Profile Information</h5>
+            <form action="{{ url_for('account.account') }}" method="POST">
+              <input type="hidden" name="action" value="update_profile">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Full Name</label>
+                  <input type="text" name="name" class="form-control" value="{{ current_user.name }}" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Email Address</label>
+                  <input type="email" class="form-control" value="{{ current_user.email }}" disabled>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Phone Number</label>
+                  <input type="tel" name="phone" class="form-control" value="{{ current_user.phone or '' }}" placeholder="+91 98765 43210">
+                </div>
+                <div class="col-12 mt-4">
+                  <button type="submit" class="btn btn-avyro btn-avyro-maroon px-4 py-2">Save Profile Changes</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Orders Tab -->
+        <div class="tab-pane fade" id="tab-orders">
+          <div class="card border-0 shadow-sm radius-lg p-4 bg-white">
+            <h5 class="font-serif fw-bold mb-4 border-bottom pb-2">Order History</h5>
+            {% if orders %}
+            <div class="table-responsive">
+              <table class="table align-middle">
+                <thead class="bg-light">
+                  <tr class="small text-muted font-serif">
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th class="text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for order in orders %}
+                  <tr>
+                    <td class="fw-bold font-serif text-primary">{{ order.order_number }}</td>
+                    <td class="small">{{ order.created_at.strftime('%b %d, %Y') }}</td>
+                    <td class="fw-bold font-serif">{{ order.total_amount | currency }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ order.payment_status }}</span></td>
+                    <td>
+                      <span class="badge 
+                        {% if order.order_status == 'Delivered' %}bg-success
+                        {% elif order.order_status == 'Cancelled' %}bg-danger
+                        {% else %}bg-info{% endif %} px-3 py-1 radius-pill">
+                        {{ order.order_status }}
+                      </span>
+                    </td>
+                    <td class="text-end">
+                      <a href="{{ url_for('orders.order_detail', order_id=order.id) }}" class="btn btn-sm btn-outline-dark">Details</a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-box-seam fs-1 mb-2 d-block"></i>
+              <p>You haven't placed any orders yet.</p>
+              <a href="{{ url_for('shop.products') }}" class="btn btn-avyro btn-avyro-maroon btn-sm px-4">Browse Catalog</a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Addresses Tab -->
+        <div class="tab-pane fade" id="tab-addresses">
+          <div class="card border-0 shadow-sm radius-lg p-4 mb-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+              <h5 class="font-serif fw-bold mb-0">Saved Addresses</h5>
+              <button class="btn btn-sm btn-outline-dark" data-bs-toggle="collapse" data-bs-target="#newAddressForm">+ Add New Address</button>
+            </div>
+
+            <!-- Collapse Add Address Form -->
+            <div class="collapse mb-4" id="newAddressForm">
+              <div class="card p-3 bg-sand border radius-md">
+                <h6 class="font-serif fw-bold mb-3">Add Shipping Address</h6>
+                <form action="{{ url_for('account.account') }}" method="POST">
+                  <input type="hidden" name="action" value="add_address">
+                  <div class="row g-3">
+                    <div class="col-md-6"><input type="text" name="name" class="form-control form-control-sm" placeholder="Full Name" required></div>
+                    <div class="col-md-6"><input type="tel" name="phone" class="form-control form-control-sm" placeholder="Phone Number" required></div>
+                    <div class="col-12"><textarea name="address" class="form-control form-control-sm" rows="2" placeholder="Street Address" required></textarea></div>
+                    <div class="col-md-4"><input type="text" name="city" class="form-control form-control-sm" placeholder="City" required></div>
+                    <div class="col-md-4"><input type="text" name="state" class="form-control form-control-sm" placeholder="State" required></div>
+                    <div class="col-md-4"><input type="text" name="pincode" class="form-control form-control-sm" placeholder="Pincode" required></div>
+                    <div class="col-12">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="is_default" value="1" id="defCheck">
+                        <label class="form-check-label small" for="defCheck">Set as Default Address</label>
+                      </div>
+                    </div>
+                    <div class="col-12"><button type="submit" class="btn btn-sm btn-avyro btn-avyro-maroon px-3">Save Address</button></div>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Addresses List Grid -->
+            {% if addresses %}
+            <div class="row g-3">
+              {% for addr in addresses %}
+              <div class="col-md-6">
+                <div class="p-3 border radius-md bg-white position-relative">
+                  {% if addr.is_default %}
+                  <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2">Default</span>
+                  {% endif %}
+                  <strong class="d-block font-serif text-dark mb-1">{{ addr.name }}</strong>
+                  <p class="text-muted small mb-1">{{ addr.address }}, {{ addr.city }}, {{ addr.state }} - {{ addr.pincode }}</p>
+                  <p class="text-muted extra-small mb-2">Phone: {{ addr.phone }}</p>
+                  <form action="{{ url_for('account.delete_address', address_id=addr.id) }}" method="POST">
+                    <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2 extra-small">Delete</button>
+                  </form>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted small mb-0">No addresses saved yet.</p>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
