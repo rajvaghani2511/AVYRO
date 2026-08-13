@@ -198,17 +198,34 @@ def api_search():
     search = f"%{q}%"
     products = Product.query.filter(
         Product.status == True,
-        (Product.name.ilike(search)) | (Product.brand.ilike(search))
-    ).limit(6).all()
+        (Product.name.ilike(search)) |
+        (Product.brand.ilike(search)) |
+        (Product.sku.ilike(search)) |
+        (Product.description.ilike(search)) |
+        (Product.short_description.ilike(search))
+    ).order_by(Product.id.asc()).limit(8).all()
 
     results = []
     for p in products:
+        img_name = p.main_image
+        if img_name:
+            if img_name.startswith('http://') or img_name.startswith('https://'):
+                img_url = img_name
+            elif img_name.startswith('/static/'):
+                img_url = img_name
+            else:
+                img_url = f"/static/uploads/{img_name}"
+        else:
+            img_url = "/static/uploads/default-product.webp"
+
         results.append({
+            'id': p.id,
             'name': p.name,
             'slug': p.slug,
             'price': p.effective_price,
-            'image': p.main_image,
-            'category': p.category.name if p.category else ''
+            'image': img_name,
+            'image_url': img_url,
+            'category': p.category.name if p.category else 'AVYRO Collection'
         })
     return jsonify(results)
 

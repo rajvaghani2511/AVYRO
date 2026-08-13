@@ -121,16 +121,21 @@ function initSearchOverlay() {
               </div>
             `;
           } else {
-            resultsContainer.innerHTML = data.map(item => `
-              <a href="/product/${item.slug}" class="search-result-item" onclick="closeSearchOverlay()">
-                <img src="/static/uploads/${item.image}" class="search-result-img" alt="${item.name}" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100'">
-                <div class="flex-grow-1 overflow-hidden">
-                  <div class="fw-bold font-serif fs-6 text-dark text-truncate">${item.name}</div>
-                  <div class="text-muted extra-small">${item.category || 'AVYRO Collection'}</div>
-                </div>
-                <div class="fw-bold text-primary font-serif">₹${item.price.toFixed(2)}</div>
-              </a>
-            `).join('');
+            resultsContainer.innerHTML = data.map(item => {
+              const imgSrc = item.image_url || (item.image ? (item.image.startsWith('http') ? item.image : `/static/uploads/${item.image}`) : '/static/uploads/default-product.webp');
+              const priceVal = typeof item.price === 'number' ? (Number.isInteger(item.price) ? `₹${item.price.toLocaleString('en-IN')}` : `₹${item.price.toLocaleString('en-IN', {minimumFractionDigits: 2})}`) : item.price;
+              
+              return `
+                <a href="/product/${item.slug}" class="search-result-item" onclick="closeSearchOverlay()">
+                  <img src="${imgSrc}" class="search-result-img" alt="${item.name}" onerror="this.src='/static/uploads/default-product.webp'">
+                  <div class="flex-grow-1 overflow-hidden">
+                    <div class="fw-bold font-serif fs-6 text-dark text-truncate">${item.name}</div>
+                    <div class="text-muted extra-small">${item.category || 'AVYRO Collection'}</div>
+                  </div>
+                  <div class="fw-bold text-primary font-serif">${priceVal}</div>
+                </a>
+              `;
+            }).join('');
           }
         })
         .catch(err => console.error('Search error:', err));
