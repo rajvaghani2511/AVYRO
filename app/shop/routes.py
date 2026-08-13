@@ -212,3 +212,43 @@ def api_search():
         })
     return jsonify(results)
 
+
+# Static Information & Customer Care Routes
+@shop_bp.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        flash('Thank you for contacting AVYRO Customer Support! We will respond to your query shortly.', 'success')
+        return redirect(url_for('shop.contact'))
+    return render_template('info.html', page_type='contact', title='Contact Us')
+
+
+@shop_bp.route('/shipping-policy')
+def shipping():
+    return render_template('info.html', page_type='shipping', title='Shipping Policy')
+
+
+@shop_bp.route('/returns-refunds')
+def returns():
+    return render_template('info.html', page_type='returns', title='Returns & Refunds Policy')
+
+
+@shop_bp.route('/faqs')
+def faqs():
+    return render_template('info.html', page_type='faqs', title='Frequently Asked Questions')
+
+
+@shop_bp.route('/about-us')
+def about():
+    return render_template('info.html', page_type='about', title='About AVYRO')
+
+
+@shop_bp.route('/privacy-policy')
+def privacy():
+    return render_template('info.html', page_type='privacy', title='Privacy Policy')
+
+
+@shop_bp.route('/terms-of-service')
+def terms():
+    return render_template('info.html', page_type='terms', title='Terms of Service')
+
+

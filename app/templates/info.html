@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} — AVYRO Home & Kitchen{% endblock %}
+
+{% block content %}
+<div class="container py-5 my-3">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('shop.home') }}" class="text-decoration-none text-muted">Home</a></li>
+      <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">{{ title }}</li>
+    </ol>
+  </nav>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card border-0 shadow-sm radius-lg p-4 p-md-5 bg-white">
+
+        {% if page_type == 'contact' %}
+          <div class="text-center max-w-600 mx-auto mb-5">
+            <span class="text-uppercase text-muted fw-bold extra-small letter-spacing-2">Customer Care</span>
+            <h1 class="font-serif fw-bold display-6 mt-1">Get in Touch with AVYRO</h1>
+            <div class="brass-line-accent mx-auto mt-2"></div>
+            <p class="text-muted mt-3">Have questions about your order, shipping, or products? Our team is here to assist you.</p>
+          </div>
+
+          <div class="row g-4">
+            <div class="col-md-5">
+              <div class="p-4 radius-md bg-light h-100">
+                <h5 class="font-serif fw-bold mb-3"><i class="bi bi-headset me-2 text-warning"></i> Contact Details</h5>
+                <p class="small text-muted mb-3">Reach out to our customer support team Monday through Saturday, 9 AM – 7 PM IST.</p>
+
+                <div class="d-flex align-items-center mb-3">
+                  <i class="bi bi-envelope-at fs-5 text-warning me-3"></i>
+                  <div>
+                    <div class="extra-small text-uppercase text-muted fw-bold">Email Support</div>
+                    <div class="fw-semibold small">support@avyro.com</div>
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center mb-3">
+                  <i class="bi bi-telephone fs-5 text-warning me-3"></i>
+                  <div>
+                    <div class="extra-small text-uppercase text-muted fw-bold">Helpline</div>
+                    <div class="fw-semibold small">+91 1800-123-4567</div>
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-geo-alt fs-5 text-warning me-3"></i>
+                  <div>
+                    <div class="extra-small text-uppercase text-muted fw-bold">Headquarters</div>
+                    <div class="fw-semibold small">AVYRO E-Commerce Inc., Mumbai, India</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-7">
+              <form method="POST" action="{{ url_for('shop.contact') }}">
+                <h5 class="font-serif fw-bold mb-3">Send Us a Message</h5>
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Your Full Name</label>
+                  <input type="text" name="name" class="form-control" placeholder="Enter your name" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Email Address</label>
+                  <input type="email" name="email" class="form-control" placeholder="name@example.com" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Subject</label>
+                  <input type="text" name="subject" class="form-control" placeholder="Order status, inquiry, feedback..." required>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label small fw-semibold">Message</label>
+                  <textarea name="message" class="form-control" rows="4" placeholder="How can we help you today?" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-avyro btn-avyro-brass w-100 py-2.5">
+                  Submit Message &rarr;
+                </button>
+              </form>
+            </div>
+          </div>
+
+        {% elif page_type == 'shipping' %}
+          <div class="mb-4">
+            <span class="text-uppercase text-muted fw-bold extra-small letter-spacing-2">Customer Care</span>
+            <h1 class="font-serif fw-bold display-6 mt-1">Shipping & Delivery Policy</h1>
+            <div class="brass-line-accent mt-2 mb-4"></div>
+          </div>
+          <div class="content-body text-muted lh-lg">
+            <p>At AVYRO, we ensure your Home & Kitchen orders are processed quickly and delivered safely across India.</p>
+            <h5 class="font-serif fw-bold text-dark mt-4">1. Delivery Timeline</h5>
+            <p>Standard delivery takes 3 to 7 business days depending on your location. Metro cities typically receive deliveries within 2 to 4 business days.</p>
+            <h5 class="font-serif fw-bold text-dark mt-4">2. Shipping Charges</h5>
+            <p>We offer free nationwide delivery on orders above ₹1,000. Standard shipping fees apply for orders below ₹1,000 at checkout.</p>
+            <h5 class="font-serif fw-bold text-dark mt-4">3. Order Tracking</h5>
+            <p>Once your order is dispatched, you will receive a tracking link via email and SMS. You can also track your shipment under <a href="{{ url_for('account.account') }}#orders">My Account &gt; Order History</a>.</p>
+          </div>
+
+        {% elif page_type == 'returns' %}
+          <div class="mb-4">
+            <span class="text-uppercase text-muted fw-bold extra-small letter-spacing-2">Customer Care</span>
+            <h1 class="font-serif fw-bold display-6 mt-1">Returns & Refunds Policy</h1>
+            <div class="brass-line-accent mt-2 mb-4"></div>
+          </div>
+          <div class="content-body text-muted lh-lg">
+            <h5 class="font-serif fw-bold text-dark">Easy 7-Day Returns</h5>
+            <p>We want you to be completely satisfied with your purchase. If a product arrives damaged, defective, or incorrect, you can request a return or exchange within 7 days of delivery.</p>
+            <h5 class="font-serif fw-bold text-dark mt-4">Return Eligibility</h5>
+            <ul>
+              <li>The item must be unused, unwashed, and in its original packaging with tags intact.</li>
+              <li>Damaged or defective items require photo/video proof during return initiation.</li>
+            </ul>
+            <h5 class="font-serif fw-bold text-dark mt-4">Refund Process</h5>
+            <p>Once your returned product passes quality inspection at our warehouse, your refund will be processed within 5–7 business days back to your original payment method.</p>
+          </div>
+
+        {% elif page_type == 'faqs' %}
+          <div class="mb-4 text-center max-w-600 mx-auto">
+            <span class="text-uppercase text-muted fw-bold extra-small letter-spacing-2">Customer Support</span>
+            <h1 class="font-serif fw-bold display-6 mt-1">Frequently Asked Questions</h1>
+            <div class="brass-line-accent mx-auto mt-2 mb-4"></div>
+          </div>
+
+          <div class="accordion accordion-flush" id="faqAccordion">
+            <div class="accordion-item border rounded mb-3">
+              <h2 class="accordion-header" id="faq1">
+                <button class="accordion-button font-serif fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                  How can I track my order?
+                </button>
+              </h2>
+              <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                  Log in to your AVYRO account and navigate to <a href="{{ url_for('account.account') }}#orders">My Account &gt; Order History</a>. Click on your order to view live tracking updates.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item border rounded mb-3">
+              <h2 class="accordion-header" id="faq2">
+                <button class="accordion-button collapsed font-serif fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                  What payment methods do you accept?
+                </button>
+              </h2>
+              <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                  We accept all major Credit/Debit Cards, Net Banking, UPI (Google Pay, PhonePe, Paytm), and Cash on Delivery (COD).
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item border rounded mb-3">
+              <h2 class="accordion-header" id="faq3">
+                <button class="accordion-button collapsed font-serif fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                  How do I initiate a return?
+                </button>
+              </h2>
+              <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                  Contact our support team at <a href="{{ url_for('shop.contact') }}">Contact Us</a> or email support@avyro.com within 7 days of receiving your item with your order ID.
+                </div>
+              </div>
+            </div>
+          </div>
+
+        {% elif page_type == 'about' %}
+          <div class="mb-4">
+            <span class="text-uppercase text-muted fw-bold extra-small letter-spacing-2">About AVYRO</span>
+            <h1 class="font-serif fw-bold display-6 mt-1">Smart Solutions for Everyday Living</h1>
+            <div class="brass-line-accent mt-2 mb-4"></div>
+          </div>
+          <div class="content-body text-muted lh-lg">
+            <p class="fs-5 text-dark font-serif">Welcome to AVYRO — your trusted destination for smart, durable, and practical Home &amp; Kitchen essentials.</p>
+            <p>We believe that daily living should be hassle-free. That’s why we curate thoughtfully engineered products ranging from kitchen organization, oil dispensers, and airtight storage to smart cleaning tools and home improvement items.</p>
+            <p>Our commitment is centered around three pillars: <strong>Quality, Value, and Reliable Service</strong>. Every item in our catalog is selected to help make your home neater, more organized, and more efficient every day.</p>
+          </div>
+
+        {% elif page_type == 'privacy' %}
+          <div class="mb-4">
+            <span class="text-uppercase text-muted fw-bold extra-small letter-spacing-2">Legal Information</span>
+            <h1 class="font-serif fw-bold display-6 mt-1">Privacy Policy</h1>
+            <div class="brass-line-accent mt-2 mb-4"></div>
+          </div>
+          <div class="content-body text-muted lh-lg">
+            <p>AVYRO values your privacy. This policy outlines how we collect, use, and protect your personal information when you visit or make a purchase from our store.</p>
+            <h5 class="font-serif fw-bold text-dark mt-4">Data Collection</h5>
+            <p>We collect essential information required to fulfill your orders, including your name, shipping address, email address, and phone number.</p>
+            <h5 class="font-serif fw-bold text-dark mt-4">Data Security</h5>
+            <p>Your payment credentials are processed securely through encrypted payment gateways. We never store credit card numbers on our servers.</p>
+          </div>
+
+        {% elif page_type == 'terms' %}
+          <div class="mb-4">
+            <span class="text-uppercase text-muted fw-bold extra-small letter-spacing-2">Legal Information</span>
+            <h1 class="font-serif fw-bold display-6 mt-1">Terms of Service</h1>
+            <div class="brass-line-accent mt-2 mb-4"></div>
+          </div>
+          <div class="content-body text-muted lh-lg">
+            <p>By accessing or using AVYRO services, you agree to be bound by our website terms and conditions.</p>
+            <h5 class="font-serif fw-bold text-dark mt-4">Product Availability</h5>
+            <p>Prices and stock availability are subject to change without notice. We reserve the right to modify or discontinue any item at any time.</p>
+            <h5 class="font-serif fw-bold text-dark mt-4">Intellectual Property</h5>
+            <p>All content on this site, including text, graphics, logos, and images, is the property of AVYRO E-Commerce Inc.</p>
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

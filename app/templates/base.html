@@ -158,63 +158,71 @@
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Luxury Editorial Footer -->
+  <!-- Editorial Footer -->
   <footer class="avyro-footer">
     <div class="container">
       <div class="row g-4 mb-5">
+        
+        <!-- Left Section -->
         <div class="col-lg-4">
           <a class="navy-logo text-white fs-2 mb-3 d-inline-block" href="{{ url_for('shop.home') }}">
             AVYRO<span class="text-warning">.</span>
           </a>
-          <p class="text-muted small pe-lg-4 lh-lg">
-            Traditional soul meets modern luxury. AVYRO creates carefully engineered physical products and lifestyle gear crafted for refined living.
+          <p class="footer-desc pe-lg-4 mb-4">
+            Smart &amp; useful products for your everyday home and kitchen. Quality essentials, practical solutions and great value — all in one place.
           </p>
-          <div class="d-flex gap-2 mt-4">
-            <a href="#" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-instagram"></i></a>
-            <a href="#" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-twitter-x"></i></a>
-            <a href="#" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-facebook"></i></a>
-            <a href="#" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-youtube"></i></a>
+          <div class="d-flex gap-2">
+            <a href="https://instagram.com/avyro_official" target="_blank" rel="noopener noreferrer" class="footer-social-btn" title="Instagram"><i class="bi bi-instagram"></i></a>
+            <a href="https://twitter.com/avyro_official" target="_blank" rel="noopener noreferrer" class="footer-social-btn" title="Twitter/X"><i class="bi bi-twitter-x"></i></a>
+            <a href="https://facebook.com/avyro.official" target="_blank" rel="noopener noreferrer" class="footer-social-btn" title="Facebook"><i class="bi bi-facebook"></i></a>
+            <a href="https://youtube.com/@avyro_official" target="_blank" rel="noopener noreferrer" class="footer-social-btn" title="YouTube"><i class="bi bi-youtube"></i></a>
           </div>
         </div>
 
+        <!-- Column 1: Collections -->
         <div class="col-6 col-lg-2">
           <h6 class="footer-heading">Collections</h6>
-          <ul class="footer-links small">
-            <li><a href="{{ url_for('shop.products') }}">All Catalog</a></li>
+          <ul class="footer-links">
+            <li><a href="{{ url_for('shop.products') }}">All Products</a></li>
             <li><a href="{{ url_for('shop.products', sort='newest') }}">New Arrivals</a></li>
             <li><a href="{{ url_for('shop.products', sort='popular') }}">Best Sellers</a></li>
-            <li><a href="{{ url_for('shop.products') }}">Limited Drops</a></li>
+            <li><a href="{{ url_for('shop.category_view', slug='home-organization-storage') }}">Home Essentials</a></li>
+            <li><a href="{{ url_for('shop.category_view', slug='kitchen-dining') }}">Kitchen Essentials</a></li>
           </ul>
         </div>
 
+        <!-- Column 2: Customer Care -->
         <div class="col-6 col-lg-2">
-          <h6 class="footer-heading">Concierge</h6>
-          <ul class="footer-links small">
-            <li><a href="#">Contact Concierge</a></li>
-            <li><a href="#">Shipping Policy</a></li>
-            <li><a href="#">Returns & Exchange</a></li>
-            <li><a href="#">Authenticity Guarantee</a></li>
+          <h6 class="footer-heading">Customer Care</h6>
+          <ul class="footer-links">
+            <li><a href="{{ url_for('shop.contact') }}">Contact Us</a></li>
+            <li><a href="{{ url_for('shop.shipping') }}">Shipping Policy</a></li>
+            <li><a href="{{ url_for('shop.returns') }}">Returns &amp; Refunds</a></li>
+            <li><a href="{{ url_for('shop.faqs') }}">FAQs</a></li>
           </ul>
         </div>
 
+        <!-- Column 3: My Account -->
         <div class="col-6 col-lg-2">
-          <h6 class="footer-heading">Client Services</h6>
-          <ul class="footer-links small">
+          <h6 class="footer-heading">My Account</h6>
+          <ul class="footer-links">
             <li><a href="{{ url_for('account.account') }}">My Account</a></li>
-            <li><a href="{{ url_for('account.account') }}">Order Tracking</a></li>
-            <li><a href="{{ url_for('account.wishlist') }}">Saved Items</a></li>
+            <li><a href="{{ url_for('account.account') }}#orders">Order Tracking</a></li>
+            <li><a href="{{ url_for('account.wishlist') }}">Wishlist</a></li>
             <li><a href="{{ url_for('cart.view_cart') }}">Shopping Bag</a></li>
           </ul>
         </div>
 
+        <!-- Column 4: Quick Links -->
         <div class="col-6 col-lg-2">
-          <h6 class="footer-heading">Portal</h6>
-          <ul class="footer-links small">
-            <li><a href="#">Privacy Policy</a></li>
-            <li><a href="#">Terms of Service</a></li>
-            <li><a href="{{ url_for('admin.login') }}">Admin Login</a></li>
+          <h6 class="footer-heading">Quick Links</h6>
+          <ul class="footer-links">
+            <li><a href="{{ url_for('shop.about') }}">About Us</a></li>
+            <li><a href="{{ url_for('shop.privacy') }}">Privacy Policy</a></li>
+            <li><a href="{{ url_for('shop.terms') }}">Terms of Service</a></li>
           </ul>
         </div>
+
       </div>
 
       <!-- Traditional Motif Divider -->
@@ -222,11 +230,12 @@
         <span class="motif-icon">◆ ◆ ◆</span>
       </div>
 
-      <div class="d-flex flex-column flex-md-row align-items-center justify-content-between pt-3 small text-muted">
-        <div>&copy; 2026 AVYRO E-Commerce Inc. All Rights Reserved.</div>
-        <div class="d-flex gap-3 mt-2 mt-md-0">
-          <span class="text-muted extra-small">SECURE ENCRYPTED CHECKOUT</span>
-          <i class="bi bi-shield-check text-warning"></i>
+      <!-- Bottom Footer -->
+      <div class="d-flex flex-column flex-md-row align-items-center justify-content-between pt-3 footer-bottom-text">
+        <div>&copy; 2026 AVYRO. All Rights Reserved.</div>
+        <div class="d-flex align-items-center gap-2 mt-2 mt-md-0 footer-secure-tag">
+          <span>SECURE &amp; SAFE CHECKOUT</span>
+          <i class="bi bi-shield-check text-warning fs-5"></i>
         </div>
       </div>
     </div>
