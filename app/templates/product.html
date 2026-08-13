@@ -24,6 +24,16 @@
     <div class="col-lg-6">
       <div class="product-gallery-main">
         <img id="mainGalleryImage" src="{{ product.main_image | img_url }}" alt="{{ product.name }}" onerror="this.src='https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800'">
+        
+        {% if product.images and product.images|length > 1 %}
+        <!-- Image Navigation Arrows -->
+        <button type="button" class="gallery-nav-btn gallery-nav-prev" id="galleryPrevBtn" aria-label="Previous image">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <button type="button" class="gallery-nav-btn gallery-nav-next" id="galleryNextBtn" aria-label="Next image">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+        {% endif %}
       </div>
 
       <!-- Multi-image Thumbnails -->
@@ -43,7 +53,6 @@
       <div class="ps-lg-3">
         <div class="d-flex align-items-center gap-2 mb-2">
           <span class="badge bg-dark text-warning border border-warning px-3 py-1 radius-pill text-uppercase extra-small">{{ product.brand or 'AVYRO' }}</span>
-          <span class="text-muted extra-small">SKU: {{ product.sku }}</span>
         </div>
 
         <h1 class="font-serif display-6 fw-bold text-dark mb-3">{{ product.name }}</h1>
@@ -185,10 +194,6 @@
                 <tr>
                   <th style="width: 30%;">Brand</th>
                   <td>{{ product.brand or 'AVYRO' }}</td>
-                </tr>
-                <tr>
-                  <th>SKU Code</th>
-                  <td>{{ product.sku }}</td>
                 </tr>
                 <tr>
                   <th>Category</th>

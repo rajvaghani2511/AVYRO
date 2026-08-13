@@ -138,28 +138,84 @@ function initSearchOverlay() {
   });
 }
 
-// Product Gallery Thumbnail Switcher
+// Product Gallery Main Image & Thumbnail Switcher
 function initProductGallery() {
   const mainImg = document.getElementById('mainGalleryImage');
   const thumbs = document.querySelectorAll('.thumb-item');
+  const prevBtn = document.getElementById('galleryPrevBtn');
+  const nextBtn = document.getElementById('galleryNextBtn');
 
-  if (!mainImg || !thumbs.length) return;
+  if (!mainImg) return;
 
-  thumbs.forEach(thumb => {
-    thumb.addEventListener('click', () => {
-      thumbs.forEach(t => t.classList.remove('active'));
-      thumb.classList.add('active');
-      const newSrc = thumb.getAttribute('data-src');
-      if (newSrc) {
-        mainImg.style.opacity = '0.4';
-        setTimeout(() => {
-          mainImg.src = newSrc;
-          mainImg.style.opacity = '1';
-        }, 150);
-      }
+  let currentIndex = 0;
+  const imagesList = [];
+
+  if (thumbs.length > 0) {
+    thumbs.forEach((thumb, idx) => {
+      const src = thumb.getAttribute('data-src');
+      if (src) imagesList.push(src);
+      
+      thumb.addEventListener('click', () => {
+        switchImage(idx);
+      });
     });
-  });
+  } else if (mainImg.src) {
+    imagesList.push(mainImg.src);
+  }
+
+  function switchImage(index) {
+    if (imagesList.length === 0) return;
+    
+    // Looping index bounds
+    if (index < 0) {
+      currentIndex = imagesList.length - 1;
+    } else if (index >= imagesList.length) {
+      currentIndex = 0;
+    } else {
+      currentIndex = index;
+    }
+
+    const newSrc = imagesList[currentIndex];
+
+    // Transition effect
+    mainImg.style.opacity = '0.3';
+    mainImg.style.transition = 'opacity 0.15s ease';
+
+    setTimeout(() => {
+      mainImg.src = newSrc;
+      mainImg.style.opacity = '1';
+    }, 150);
+
+    // Synchronize active thumbnail highlight
+    if (thumbs.length > 0) {
+      thumbs.forEach((t, i) => {
+        if (i === currentIndex) {
+          t.classList.add('active');
+          t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } else {
+          t.classList.remove('active');
+        }
+      });
+    }
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      switchImage(currentIndex - 1);
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      switchImage(currentIndex + 1);
+    });
+  }
 }
+
 
 // Quantity Inputs
 function initQuantityControls() {

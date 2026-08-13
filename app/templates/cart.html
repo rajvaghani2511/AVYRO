@@ -30,7 +30,7 @@
               <img src="{{ item.product.main_image | img_url }}" alt="{{ item.product.name }}" class="rounded" style="width: 76px; height: 76px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200'">
               <div>
                 <a href="{{ url_for('shop.product_detail', slug=item.product.slug) }}" class="fw-bold font-serif fs-6 text-dark text-decoration-none d-block">{{ item.product.name }}</a>
-                <span class="text-muted extra-small">SKU: {{ item.product.sku }} | Price: {{ item.product.effective_price | currency }}</span>
+                <span class="text-muted extra-small">Price: {{ item.product.effective_price | currency }}</span>
               </div>
             </div>
 

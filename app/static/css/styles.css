@@ -1038,3 +1038,70 @@ a:hover {
   animation: avyroCartBounce 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
 
+/* Product Main Image Navigation Arrow Buttons */
+.product-gallery-main {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background-color: #ffffff;
+}
+
+.gallery-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(35, 27, 21, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  transition: all 0.25s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gallery-nav-btn:hover {
+  background: var(--avyro-maroon);
+  color: #ffffff;
+  border-color: var(--avyro-brass);
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 20px rgba(92, 29, 36, 0.4);
+}
+
+.gallery-nav-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.gallery-nav-prev {
+  left: 14px;
+}
+
+.gallery-nav-next {
+  right: 14px;
+}
+
+@media (max-width: 576px) {
+  .gallery-nav-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+  .gallery-nav-prev {
+    left: 8px;
+  }
+  .gallery-nav-next {
+    right: 8px;
+  }
+}
+
+
