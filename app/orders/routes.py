@@ -1,3 +1,5 @@
+import datetime
+import random
 import urllib.request
 import json
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
@@ -96,12 +98,25 @@ def checkout():
     discount = 0.0
     grand_total = subtotal - discount
 
-    # Pre-fill address if logged in
+    # Pre-fill address if logged in or draft saved
     default_address = None
     if current_user.is_authenticated:
         default_address = Address.query.filter_by(user_id=current_user.id, is_default=True).first()
         if not default_address:
             default_address = Address.query.filter_by(user_id=current_user.id).first()
+
+    draft = session.get('checkout_draft')
+    if draft and current_user.is_authenticated:
+        if not default_address:
+            default_address = type('DraftAddress', (object,), {
+                'name': draft.get('full_name', ''),
+                'phone': draft.get('phone', ''),
+                'address': draft.get('address', ''),
+                'city': draft.get('city', ''),
+                'state': draft.get('state', ''),
+                'pincode': draft.get('pincode', ''),
+                'country': 'India'
+            })()
 
     if request.method == 'POST':
         full_name = request.form.get('full_name', '').strip()
@@ -129,11 +144,25 @@ def checkout():
             flash('Please fill in all shipping details.', 'danger')
             return render_template('checkout.html', cart=cart, shipping=shipping, grand_total=grand_total, default_address=default_address)
 
-        # Create user if guest checkout or save address if user requested
-        user_id = current_user.id if current_user.is_authenticated else None
+        # MANDATORY CUSTOMER AUTHENTICATION FOR ORDER PLACEMENT
+        if not current_user.is_authenticated:
+            session['checkout_draft'] = {
+                'full_name': full_name,
+                'email': email,
+                'phone': phone_raw,
+                'address': address_text,
+                'city': city,
+                'state': state,
+                'pincode': pincode,
+                'payment_method': payment_method
+            }
+            flash('Customer login or account creation is required before placing an order.', 'info')
+            return redirect(url_for('auth.customer_auth', next=url_for('orders.checkout')))
+
+        user_id = current_user.id
         
         # If logged in and save_address checked
-        if current_user.is_authenticated and request.form.get('save_address'):
+        if request.form.get('save_address'):
             new_addr = Address(
                 user_id=current_user.id,
                 name=full_name,

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -9,9 +9,11 @@ class User(UserMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(256), nullable=False)
-    phone = db.Column(db.String(20), nullable=True)
+    email = db.Column(db.String(120), unique=True, nullable=True, index=True)
+    password_hash = db.Column(db.String(256), nullable=True)
+    phone = db.Column(db.String(20), unique=True, nullable=True, index=True)
+    google_id = db.Column(db.String(120), unique=True, nullable=True, index=True)
+    phone_verified = db.Column(db.Boolean, default=False)
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -23,17 +25,104 @@ class User(UserMixin, db.Model):
     reviews = db.relationship('Review', backref='user', lazy=True, cascade='all, delete-orphan')
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        if password:
+            self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
-        return f'<User {self.email}>'
+        return f'<User {self.email or self.phone}>'
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+class PhoneOTP(db.Model):
+    __tablename__ = 'phone_otps'
+
+    id = db.Column(db.Integer, primary_key=True)
+    phone = db.Column(db.String(20), nullable=False, index=True)
+    otp_hash = db.Column(db.String(256), nullable=False)
+    attempts = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    verified = db.Column(db.Boolean, default=False)
+
+    @classmethod
+    def generate_otp(cls, phone):
+        clean_phone = re.sub(r'[^0-9]', '', phone)
+        if clean_phone.startswith('91') and len(clean_phone) == 12:
+            clean_phone = clean_phone[2:]
+        if len(clean_phone) != 10 or not re.match(r'^[6-9][0-9]{9}$', clean_phone):
+            return False, "Please enter a valid 10-digit Indian mobile number.", 0
+
+        formatted_phone = f"+91 {clean_phone}"
+
+        recent = cls.query.filter_by(phone=formatted_phone, verified=False).order_by(cls.created_at.desc()).first()
+        now = datetime.utcnow()
+        if recent and (now - recent.created_at).total_seconds() < 60:
+            remaining = int(60 - (now - recent.created_at).total_seconds())
+            return False, f"Please wait {remaining} seconds before requesting a new OTP.", remaining
+
+        import secrets
+        raw_otp = f"{secrets.randbelow(900000) + 100000}"
+        hashed = generate_password_hash(raw_otp)
+        expires = now + timedelta(minutes=10)
+
+        cls.query.filter_by(phone=formatted_phone, verified=False).delete()
+
+        otp_record = cls(
+            phone=formatted_phone,
+            otp_hash=hashed,
+            expires_at=expires,
+            verified=False
+        )
+        db.session.add(otp_record)
+        db.session.commit()
+
+        # Send Real SMS via API provider if configured
+        import os
+        from app.utils_auth import send_real_sms_otp
+        send_real_sms_otp(formatted_phone, raw_otp)
+
+        return True, f"OTP sent successfully to {formatted_phone}.", 60
+
+    @classmethod
+    def verify_otp(cls, phone, input_otp):
+        clean_phone = re.sub(r'[^0-9]', '', phone)
+        if clean_phone.startswith('91') and len(clean_phone) == 12:
+            clean_phone = clean_phone[2:]
+        formatted_phone = f"+91 {clean_phone}"
+
+        clean_otp = re.sub(r'[^0-9]', '', str(input_otp))
+        if len(clean_otp) != 6:
+            return False, "OTP must be exactly 6 digits."
+
+        otp_record = cls.query.filter_by(phone=formatted_phone, verified=False).order_by(cls.created_at.desc()).first()
+        if not otp_record:
+            return False, "No active OTP found. Please request a new OTP."
+
+        now = datetime.utcnow()
+        if now > otp_record.expires_at:
+            return False, "OTP has expired. Please request a new OTP."
+
+        if otp_record.attempts >= 5:
+            return False, "Maximum verification attempts exceeded. Please request a new OTP."
+
+        otp_record.attempts += 1
+        db.session.commit()
+
+        if check_password_hash(otp_record.otp_hash, clean_otp):
+            otp_record.verified = True
+            db.session.commit()
+            return True, "OTP verified successfully!"
+        else:
+            remaining_attempts = 5 - otp_record.attempts
+            return False, f"Incorrect OTP code. {remaining_attempts} attempts remaining."
 
 
 class Category(db.Model):

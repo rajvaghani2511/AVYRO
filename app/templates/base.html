@@ -64,11 +64,11 @@
           <span class="nav-badge cart-badge-count">{{ global_cart_count }}</span>
         </a>
 
-        <!-- User Account / Auth -->
+        <!-- User Account / Auth Header -->
         {% if current_user.is_authenticated %}
         <div class="dropdown">
           <button class="btn btn-sm btn-avyro-maroon radius-pill px-2.5 px-md-3 py-1.5 dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            <i class="bi bi-person me-1"></i> <span class="d-none d-sm-inline">{{ current_user.name.split()[0] }}</span>
+            <i class="bi bi-person-circle me-1"></i> Account
           </button>
           <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg radius-md py-2">
             {% if current_user.is_admin %}
@@ -76,15 +76,18 @@
             <li><hr class="dropdown-divider"></li>
             {% endif %}
             <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.account') }}"><i class="bi bi-person-badge me-2"></i> My Account</a></li>
-            <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.account') }}#orders"><i class="bi bi-box-seam me-2"></i> Order History</a></li>
-            <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.wishlist') }}"><i class="bi bi-heart me-2"></i> Saved Items</a></li>
+            <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.account') }}#orders"><i class="bi bi-box-seam me-2"></i> My Orders</a></li>
+            <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.account') }}#orders"><i class="bi bi-truck me-2"></i> Track Order</a></li>
+            <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.account') }}#addresses"><i class="bi bi-geo-alt me-2"></i> Saved Addresses</a></li>
+            <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.wishlist') }}"><i class="bi bi-heart me-2"></i> Wishlist</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item py-2 px-3 small text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i> Sign Out</a></li>
+            <li><a class="dropdown-item py-2 px-3 small text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></li>
           </ul>
         </div>
         {% else %}
-        <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-avyro-outline py-1.5 px-2.5 px-md-3 ms-1 d-none d-sm-inline-block">Sign In</a>
-        <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-avyro-maroon py-1.5 px-2.5 px-md-3">Join</a>
+        <a href="{{ url_for('auth.customer_auth') }}" class="btn btn-sm btn-avyro-maroon py-1.5 px-2.5 px-md-3 font-body fw-semibold radius-pill">
+          <i class="bi bi-person me-1"></i> Account
+        </a>
         {% endif %}
       </div>
 

@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Sign In & Account Creation — AVYRO{% endblock %}
+
+{% block content %}
+<div class="container py-5 my-3">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-5">
+      <div class="card border-0 shadow-warm-lg radius-xl overflow-hidden bg-white">
+        
+        <!-- Auth View Tabs -->
+        <div class="d-flex border-bottom text-center" style="background-color: var(--avyro-sand);">
+          <button type="button" class="btn flex-fill py-3 fw-bold font-serif text-uppercase letter-spacing-1 nav-tab-btn {% if active_tab != 'register' %}active-auth-tab{% endif %}" id="tabBtnLogin" onclick="switchAuthTab('login')">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Login
+          </button>
+          <button type="button" class="btn flex-fill py-3 fw-bold font-serif text-uppercase letter-spacing-1 nav-tab-btn {% if active_tab == 'register' %}active-auth-tab{% endif %}" id="tabBtnRegister" onclick="switchAuthTab('register')">
+            <i class="bi bi-person-plus me-1"></i> Create Account
+          </button>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          
+          <!-- Alert Feedback Container -->
+          <div id="authAlertBox" class="alert d-none radius-md mb-4 small" role="alert"></div>
+
+          <!-- ================= LOGIN TAB ================= -->
+          <div id="loginTabContent" class="{% if active_tab == 'register' %}d-none{% endif %}">
+            <div class="text-center mb-4">
+              <h3 class="font-serif fw-bold text-dark mb-1">Welcome Back</h3>
+              <p class="text-muted small">Access your order history, saved address & wishlist</p>
+            </div>
+
+            <!-- Option A: Continue with Phone -->
+            <div class="auth-section mb-4 p-3 radius-lg border" style="background-color: var(--avyro-ivory);">
+              <label class="form-label fw-bold text-dark small mb-2 d-block">
+                <i class="bi bi-phone me-1 text-primary"></i> Continue with Phone
+              </label>
+              
+              <div id="loginStepPhone">
+                <div class="input-group mb-3">
+                  <span class="input-group-text bg-white fw-bold text-dark border-end-0">+91</span>
+                  <input type="tel" id="loginPhone" class="form-control border-start-0 ps-1" placeholder="Your Phone Number" maxlength="10" inputmode="numeric" oninput="format10DigitPhone(this)">
+                </div>
+                <button type="button" class="btn btn-avyro btn-avyro-maroon w-100 py-2 fw-semibold" id="loginSendOtpBtn" onclick="requestOtp('login')">
+                  GET OTP &rarr;
+                </button>
+              </div>
+
+              <!-- OTP Code Input (Hidden Initially) -->
+              <div id="loginStepOtp" class="d-none mt-3">
+                <div class="alert alert-info py-2 px-3 extra-small mb-3 radius-md">
+                  <i class="bi bi-info-circle me-1"></i> Enter 6-digit OTP sent to <strong id="loginPhoneDisplay">+91</strong>
+                </div>
+                <div class="mb-3">
+                  <input type="text" id="loginOtpCode" class="form-control text-center fw-bold fs-4 letter-spacing-3" placeholder="••••••" maxlength="6" inputmode="numeric">
+                </div>
+                <button type="button" class="btn btn-avyro btn-avyro-maroon w-100 py-2.5 fw-semibold mb-2" id="loginVerifyBtn" onclick="verifyOtp('login')">
+                  VERIFY & LOGIN &rarr;
+                </button>
+                <div class="text-center">
+                  <button type="button" class="btn btn-link extra-small text-muted p-0" id="loginResendBtn" onclick="requestOtp('login')" disabled>
+                    Resend OTP (<span id="loginCooldownTimer">60</span>s)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="d-flex align-items-center my-3 text-muted extra-small">
+              <hr class="flex-grow-1 my-0">
+              <span class="px-3 fw-bold text-uppercase">OR</span>
+              <hr class="flex-grow-1 my-0">
+            </div>
+
+            <!-- Option B: Continue with Google -->
+            <div>
+              <a href="{{ url_for('auth.google_login', next=next_url) }}" class="btn btn-outline-dark w-100 py-2.5 d-flex align-items-center justify-content-center gap-2 radius-md border-secondary-subtle font-body fw-semibold shadow-sm">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span>Continue with Google</span>
+              </a>
+            </div>
+
+          </div>
+
+          <!-- ================= CREATE ACCOUNT TAB ================= -->
+          <div id="registerTabContent" class="{% if active_tab != 'register' %}d-none{% endif %}">
+            <div class="text-center mb-4">
+              <h3 class="font-serif fw-bold text-dark mb-1">Create Your Account</h3>
+              <p class="text-muted small">Join AVYRO for fast checkout, order tracking & rewards</p>
+            </div>
+
+            <!-- Option A: Phone Signup -->
+            <div class="auth-section mb-4 p-3 radius-lg border" style="background-color: var(--avyro-ivory);">
+              <label class="form-label fw-bold text-dark small mb-2 d-block">
+                <i class="bi bi-phone me-1 text-primary"></i> Sign Up with Phone Number
+              </label>
+
+              <div id="regStepPhone">
+                <div class="mb-2">
+                  <input type="text" id="regName" class="form-control form-control-sm" placeholder="Your Full Name *">
+                </div>
+                <div class="input-group mb-3">
+                  <span class="input-group-text bg-white fw-bold text-dark border-end-0">+91</span>
+                  <input type="tel" id="regPhone" class="form-control border-start-0 ps-1" placeholder="Your Phone Number *" maxlength="10" inputmode="numeric" oninput="format10DigitPhone(this)">
+                </div>
+                <button type="button" class="btn btn-avyro btn-avyro-maroon w-100 py-2 fw-semibold" id="regSendOtpBtn" onclick="requestOtp('create_account')">
+                  GET VERIFICATION OTP &rarr;
+                </button>
+              </div>
+
+              <!-- OTP Verification for Registration -->
+              <div id="regStepOtp" class="d-none mt-3">
+                <div class="alert alert-info py-2 px-3 extra-small mb-3 radius-md">
+                  <i class="bi bi-info-circle me-1"></i> Enter 6-digit OTP sent to <strong id="regPhoneDisplay">+91</strong>
+                </div>
+                <div class="mb-3">
+                  <input type="text" id="regOtpCode" class="form-control text-center fw-bold fs-4 letter-spacing-3" placeholder="••••••" maxlength="6" inputmode="numeric">
+                </div>
+                <button type="button" class="btn btn-avyro btn-avyro-maroon w-100 py-2.5 fw-semibold mb-2" id="regVerifyBtn" onclick="verifyOtp('create_account')">
+                  VERIFY & CREATE ACCOUNT &rarr;
+                </button>
+                <div class="text-center">
+                  <button type="button" class="btn btn-link extra-small text-muted p-0" id="regResendBtn" onclick="requestOtp('create_account')" disabled>
+                    Resend OTP (<span id="regCooldownTimer">60</span>s)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="d-flex align-items-center my-3 text-muted extra-small">
+              <hr class="flex-grow-1 my-0">
+              <span class="px-3 fw-bold text-uppercase">OR</span>
+              <hr class="flex-grow-1 my-0">
+            </div>
+
+            <!-- Option B: Continue with Google -->
+            <div>
+              <a href="{{ url_for('auth.google_login', next=next_url) }}" class="btn btn-outline-dark w-100 py-2.5 d-flex align-items-center justify-content-center gap-2 radius-md border-secondary-subtle font-body fw-semibold shadow-sm">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span>Continue with Google</span>
+              </a>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.nav-tab-btn {
+  border: none;
+  background: transparent;
+  color: var(--avyro-muted);
+  border-bottom: 2px solid transparent;
+}
+.active-auth-tab {
+  background: #ffffff !important;
+  color: var(--avyro-olive) !important;
+  border-bottom: 3px solid var(--avyro-olive) !important;
+}
+</style>
+
+<script>
+const nextUrl = "{{ next_url or '' }}";
+let loginTimerInterval = null;
+let regTimerInterval = null;
+
+function format10DigitPhone(input) {
+  let val = input.value.replace(/[^0-9]/g, '');
+  if (val.startsWith('91') && val.length > 10) {
+    val = val.substring(2);
+  }
+  input.value = val.substring(0, 10);
+}
+
+function showAlert(message, type = 'danger') {
+  const alertBox = document.getElementById('authAlertBox');
+  alertBox.className = `alert alert-${type} radius-md mb-4 small`;
+  alertBox.innerHTML = message;
+  alertBox.classList.remove('d-none');
+}
+
+function hideAlert() {
+  document.getElementById('authAlertBox').classList.add('d-none');
+}
+
+function switchAuthTab(tab) {
+  hideAlert();
+  if (tab === 'login') {
+    document.getElementById('tabBtnLogin').classList.add('active-auth-tab');
+    document.getElementById('tabBtnRegister').classList.remove('active-auth-tab');
+    document.getElementById('loginTabContent').classList.remove('d-none');
+    document.getElementById('registerTabContent').classList.add('d-none');
+  } else {
+    document.getElementById('tabBtnRegister').classList.add('active-auth-tab');
+    document.getElementById('tabBtnLogin').classList.remove('active-auth-tab');
+    document.getElementById('registerTabContent').classList.remove('d-none');
+    document.getElementById('loginTabContent').classList.add('d-none');
+  }
+}
+
+function requestOtp(mode) {
+  hideAlert();
+  const phoneInput = mode === 'login' ? document.getElementById('loginPhone') : document.getElementById('regPhone');
+  const btn = mode === 'login' ? document.getElementById('loginSendOtpBtn') : document.getElementById('regSendOtpBtn');
+  const rawPhone = phoneInput.value.replace(/[^0-9]/g, '');
+
+  if (rawPhone.length !== 10 || !/^[6-9][0-9]{9}$/.test(rawPhone)) {
+    showAlert('Please enter a valid 10-digit Indian mobile number.', 'danger');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending OTP...';
+
+  fetch('/api/auth/phone/send-otp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: rawPhone, mode: mode })
+  })
+  .then(res => res.json().then(data => ({ status: res.status, body: data })))
+  .then(res => {
+    btn.disabled = false;
+    btn.innerHTML = mode === 'login' ? 'GET OTP &rarr;' : 'GET VERIFICATION OTP &rarr;';
+    
+    if (res.body.success) {
+      showAlert(res.body.message, 'success');
+      if (mode === 'login') {
+        document.getElementById('loginPhoneDisplay').innerText = `+91 ${rawPhone}`;
+        document.getElementById('loginStepOtp').classList.remove('d-none');
+        startCooldownTimer('login', res.body.cooldown || 60);
+      } else {
+        document.getElementById('regPhoneDisplay').innerText = `+91 ${rawPhone}`;
+        document.getElementById('regStepOtp').classList.remove('d-none');
+        startCooldownTimer('register', res.body.cooldown || 60);
+      }
+    } else {
+      showAlert(res.body.message || 'Error sending OTP', 'danger');
+    }
+  })
+  .catch(err => {
+    btn.disabled = false;
+    btn.innerHTML = mode === 'login' ? 'GET OTP &rarr;' : 'GET VERIFICATION OTP &rarr;';
+    showAlert('Network error. Please try again.', 'danger');
+  });
+}
+
+function verifyOtp(mode) {
+  hideAlert();
+  const phoneInput = mode === 'login' ? document.getElementById('loginPhone') : document.getElementById('regPhone');
+  const otpInput = mode === 'login' ? document.getElementById('loginOtpCode') : document.getElementById('regOtpCode');
+  const btn = mode === 'login' ? document.getElementById('loginVerifyBtn') : document.getElementById('regVerifyBtn');
+  const nameInput = document.getElementById('regName');
+
+  const rawPhone = phoneInput.value.replace(/[^0-9]/g, '');
+  const otpCode = otpInput.value.replace(/[^0-9]/g, '');
+
+  if (rawPhone.length !== 10) {
+    showAlert('Please enter a valid 10-digit mobile number.', 'danger');
+    return;
+  }
+  if (otpCode.length !== 6) {
+    showAlert('Please enter the 6-digit OTP received via SMS.', 'danger');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
+
+  fetch('/api/auth/phone/verify-otp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      phone: rawPhone,
+      otp: otpCode,
+      mode: mode,
+      name: mode === 'create_account' ? nameInput.value : '',
+      next_url: nextUrl
+    })
+  })
+  .then(res => res.json().then(data => ({ status: res.status, body: data })))
+  .then(res => {
+    if (res.body.success) {
+      showAlert(res.body.message, 'success');
+      setTimeout(() => {
+        window.location.href = res.body.redirect_url || '/account';
+      }, 500);
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = mode === 'login' ? 'VERIFY & LOGIN &rarr;' : 'VERIFY & CREATE ACCOUNT &rarr;';
+      showAlert(res.body.message || 'Verification failed.', 'danger');
+    }
+  })
+  .catch(err => {
+    btn.disabled = false;
+    btn.innerHTML = mode === 'login' ? 'VERIFY & LOGIN &rarr;' : 'VERIFY & CREATE ACCOUNT &rarr;';
+    showAlert('Network error. Please try again.', 'danger');
+  });
+}
+
+function startCooldownTimer(mode, seconds) {
+  const btn = mode === 'login' ? document.getElementById('loginResendBtn') : document.getElementById('regResendBtn');
+  const timerSpan = mode === 'login' ? document.getElementById('loginCooldownTimer') : document.getElementById('regCooldownTimer');
+  
+  let left = seconds;
+  btn.disabled = true;
+  timerSpan.innerText = left;
+
+  if (mode === 'login' && loginTimerInterval) clearInterval(loginTimerInterval);
+  if (mode === 'register' && regTimerInterval) clearInterval(regTimerInterval);
+
+  const interval = setInterval(() => {
+    left--;
+    timerSpan.innerText = left;
+    if (left <= 0) {
+      clearInterval(interval);
+      btn.disabled = false;
+      btn.innerText = 'Resend OTP';
+    }
+  }, 1000);
+
+  if (mode === 'login') loginTimerInterval = interval;
+  else regTimerInterval = interval;
+}
+</script>
+{% endblock %}
