@@ -72,25 +72,14 @@
         <div class="d-flex justify-content-between mb-2">
           <span class="text-secondary">Estimated Shipping</span>
           <strong class="text-dark font-serif" id="summaryShipping">
-            {% if shipping == 0 %}
             <span class="text-success">FREE</span>
-            {% else %}
-            {{ shipping | currency }}
-            {% endif %}
           </strong>
         </div>
 
         <div class="mb-3" id="freeShippingBanner">
-          {% if subtotal < 1000 %}
-          <div class="progress" style="height: 6px;">
-            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ (subtotal / 1000) * 100 }}%;"></div>
-          </div>
-          <span class="extra-small text-muted mt-1 d-block">Add {{ (1000 - subtotal) | currency }} more for FREE Shipping!</span>
-          {% else %}
           <span class="badge bg-success-subtle text-success border border-success-subtle w-100 py-2">
             <i class="bi bi-check-circle-fill me-1"></i> You qualify for FREE Express Shipping!
           </span>
-          {% endif %}
         </div>
 
         <hr class="my-3">
@@ -210,8 +199,8 @@ function recalculateCartTotals() {
     }
   });
 
-  const shipping = (subtotal >= 1000 || subtotal === 0) ? 0 : 99;
-  const grandTotal = subtotal + shipping;
+  const shipping = 0;
+  const grandTotal = subtotal;
 
   const subtotalElem = document.getElementById('summarySubtotal');
   const shippingElem = document.getElementById('summaryShipping');
@@ -220,7 +209,7 @@ function recalculateCartTotals() {
 
   if (subtotalElem) subtotalElem.innerText = formatCurrency(subtotal);
   if (shippingElem) {
-    shippingElem.innerHTML = shipping === 0 ? '<span class="text-success">FREE</span>' : formatCurrency(shipping);
+    shippingElem.innerHTML = '<span class="text-success">FREE</span>';
   }
   if (grandTotalElem) grandTotalElem.innerText = formatCurrency(grandTotal);
   if (countElem) countElem.innerText = `Bag Items (${totalItemsCount})`;
@@ -240,22 +229,11 @@ function updateFreeShippingBanner(subtotal) {
     return;
   }
 
-  if (subtotal < 1000) {
-    const remaining = 1000 - subtotal;
-    const percent = Math.min((subtotal / 1000) * 100, 100);
-    bannerContainer.innerHTML = `
-      <div class="progress" style="height: 6px;">
-        <div class="progress-bar bg-warning" role="progressbar" style="width: ${percent}%;"></div>
-      </div>
-      <span class="extra-small text-muted mt-1 d-block">Add ${formatCurrency(remaining)} more for FREE Shipping!</span>
-    `;
-  } else {
-    bannerContainer.innerHTML = `
-      <span class="badge bg-success-subtle text-success border border-success-subtle w-100 py-2">
-        <i class="bi bi-check-circle-fill me-1"></i> You qualify for FREE Express Shipping!
-      </span>
-    `;
-  }
+  bannerContainer.innerHTML = `
+    <span class="badge bg-success-subtle text-success border border-success-subtle w-100 py-2">
+      <i class="bi bi-check-circle-fill me-1"></i> You qualify for FREE Express Shipping!
+    </span>
+  `;
 }
 
 function applyServerTotals(data) {
@@ -263,15 +241,13 @@ function applyServerTotals(data) {
     const subtotalElem = document.getElementById('summarySubtotal');
     if (subtotalElem) subtotalElem.innerText = formatCurrency(data.subtotal);
   }
-  if (data.shipping !== undefined) {
-    const shippingElem = document.getElementById('summaryShipping');
-    if (shippingElem) {
-      shippingElem.innerHTML = data.shipping === 0 ? '<span class="text-success">FREE</span>' : formatCurrency(data.shipping);
-    }
+  const shippingElem = document.getElementById('summaryShipping');
+  if (shippingElem) {
+    shippingElem.innerHTML = '<span class="text-success">FREE</span>';
   }
   if (data.grand_total !== undefined) {
     const grandTotalElem = document.getElementById('summaryGrandTotal');
-    if (grandTotalElem) grandTotalElem.innerText = formatCurrency(data.grand_total);
+    if (grandTotalElem) grandTotalElem.innerText = formatCurrency(data.subtotal !== undefined ? data.subtotal : data.grand_total);
   }
   if (data.cart_count !== undefined) {
     const badges = document.querySelectorAll('.cart-badge-count');

@@ -89,11 +89,11 @@
       <h6 class="font-serif fw-bold mb-3 border-bottom pb-2 fs-5">Payment Summary</h6>
       <div class="d-flex justify-content-between mb-2 small">
         <span class="text-muted">Subtotal</span>
-        <span class="font-serif">{{ (order.total_amount - order.shipping_amount) | currency }}</span>
+        <span class="font-serif">{{ order.total_amount | currency }}</span>
       </div>
       <div class="d-flex justify-content-between mb-2 small">
         <span class="text-muted">Shipping</span>
-        <span class="font-serif">{{ order.shipping_amount | currency }}</span>
+        <span class="font-serif text-success fw-bold">FREE (₹0)</span>
       </div>
       <hr>
       <div class="d-flex justify-content-between">
