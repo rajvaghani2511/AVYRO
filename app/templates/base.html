@@ -31,20 +31,66 @@
 
   <!-- Editorial Sticky Navbar -->
   <nav class="navbar navbar-expand-lg avyro-navbar">
-    <div class="container">
-      <!-- Mobile Toggle -->
-      <button class="navbar-toggler border-0 shadow-none ps-0" type="button" data-bs-toggle="collapse" data-bs-target="#avyroNav">
-        <i class="bi bi-list fs-2 text-dark"></i>
-      </button>
+    <div class="container d-flex align-items-center justify-content-between">
+      
+      <div class="d-flex align-items-center gap-2">
+        <!-- Mobile Hamburger Toggle -->
+        <button class="navbar-toggler border-0 shadow-none ps-0" type="button" data-bs-toggle="collapse" data-bs-target="#avyroNav">
+          <i class="bi bi-list fs-2 text-dark"></i>
+        </button>
 
-      <!-- Brand Logo -->
-      <a class="navy-logo navbar-brand me-lg-5" href="{{ url_for('shop.home') }}">
-        AVYRO<span>.</span>
-      </a>
+        <!-- Brand Logo -->
+        <a class="navy-logo navbar-brand me-lg-4 me-0" href="{{ url_for('shop.home') }}">
+          AVYRO<span>.</span>
+        </a>
+      </div>
 
+      <!-- Action Controls (Always Visible on Mobile, Tablet & Desktop) -->
+      <div class="d-flex align-items-center gap-2 gap-md-3 order-lg-last">
+        <!-- Product Search Icon -->
+        <button class="nav-icon-btn" onclick="openSearchOverlay()" title="Search Products">
+          <i class="bi bi-search fs-6"></i>
+        </button>
+
+        <!-- Wishlist Icon -->
+        <a href="{{ url_for('account.wishlist') }}" class="nav-icon-btn" title="Saved Wishlist">
+          <i class="bi bi-heart fs-6"></i>
+          <span class="nav-badge wishlist-badge-count">{{ global_wishlist_count }}</span>
+        </a>
+
+        <!-- Shopping Cart Icon -->
+        <a href="{{ url_for('cart.view_cart') }}" class="nav-icon-btn" title="Shopping Bag">
+          <i class="bi bi-bag-check fs-6"></i>
+          <span class="nav-badge cart-badge-count">{{ global_cart_count }}</span>
+        </a>
+
+        <!-- User Account / Auth -->
+        {% if current_user.is_authenticated %}
+        <div class="dropdown">
+          <button class="btn btn-sm btn-avyro-maroon radius-pill px-2.5 px-md-3 py-1.5 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="bi bi-person me-1"></i> <span class="d-none d-sm-inline">{{ current_user.name.split()[0] }}</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg radius-md py-2">
+            {% if current_user.is_admin %}
+            <li><a class="dropdown-item py-2 px-3 small fw-bold text-danger" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-speedometer2 me-2"></i> Admin Portal</a></li>
+            <li><hr class="dropdown-divider"></li>
+            {% endif %}
+            <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.account') }}"><i class="bi bi-person-badge me-2"></i> My Account</a></li>
+            <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.account') }}#orders"><i class="bi bi-box-seam me-2"></i> Order History</a></li>
+            <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.wishlist') }}"><i class="bi bi-heart me-2"></i> Saved Items</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item py-2 px-3 small text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i> Sign Out</a></li>
+          </ul>
+        </div>
+        {% else %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-avyro-outline py-1.5 px-2.5 px-md-3 ms-1 d-none d-sm-inline-block">Sign In</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-avyro-maroon py-1.5 px-2.5 px-md-3">Join</a>
+        {% endif %}
+      </div>
+
+      <!-- Collapsible Navigation Links -->
       <div class="collapse navbar-collapse" id="avyroNav">
-        <!-- Left Navigation Links -->
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 mt-3 mt-lg-0">
           <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'shop.home' %}active{% endif %}" href="{{ url_for('shop.home') }}">Home</a>
           </li>
@@ -67,50 +113,8 @@
             <a class="nav-link" href="{{ url_for('shop.products', sort='newest') }}">New Arrivals</a>
           </li>
         </ul>
-
-        <!-- Right Action Controls -->
-        <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
-          <!-- Search Overlay Trigger Button -->
-          <button class="nav-icon-btn" onclick="openSearchOverlay()" title="Search AVYRO">
-            <i class="bi bi-search fs-6"></i>
-          </button>
-
-          <!-- Wishlist Icon -->
-          <a href="{{ url_for('account.wishlist') }}" class="nav-icon-btn" title="Saved Wishlist">
-            <i class="bi bi-heart fs-6"></i>
-            <span class="nav-badge wishlist-badge-count">{{ global_wishlist_count }}</span>
-          </a>
-
-          <!-- Shopping Cart Icon -->
-          <a href="{{ url_for('cart.view_cart') }}" class="nav-icon-btn" title="Shopping Bag">
-            <i class="bi bi-bag-check fs-6"></i>
-            <span class="nav-badge cart-badge-count">{{ global_cart_count }}</span>
-          </a>
-
-          <!-- User Account / Auth -->
-          {% if current_user.is_authenticated %}
-          <div class="dropdown ms-1">
-            <button class="btn btn-sm btn-avyro-maroon radius-pill px-3 py-2 dropdown-toggle" type="button" data-bs-toggle="dropdown">
-              <i class="bi bi-person me-1"></i> {{ current_user.name.split()[0] }}
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg radius-md py-2">
-              {% if current_user.is_admin %}
-              <li><a class="dropdown-item py-2 px-3 small fw-bold text-danger" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-speedometer2 me-2"></i> Admin Portal</a></li>
-              <li><hr class="dropdown-divider"></li>
-              {% endif %}
-              <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.account') }}"><i class="bi bi-person-badge me-2"></i> My Account</a></li>
-              <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.account') }}#orders"><i class="bi bi-box-seam me-2"></i> Order History</a></li>
-              <li><a class="dropdown-item py-2 px-3 small" href="{{ url_for('account.wishlist') }}"><i class="bi bi-heart me-2"></i> Saved Items</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item py-2 px-3 small text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i> Sign Out</a></li>
-            </ul>
-          </div>
-          {% else %}
-          <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-avyro-outline py-2 px-3 ms-1">Sign In</a>
-          <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-avyro-maroon py-2 px-3">Join AVYRO</a>
-          {% endif %}
-        </div>
       </div>
+
     </div>
   </nav>
 
