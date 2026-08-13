@@ -4,11 +4,13 @@
 
 {% block content %}
 <div class="container py-5 my-5 text-center">
-  <div class="max-w-600 mx-auto">
-    <h1 class="display-1 fw-extrabold text-warning font-heading">500</h1>
-    <h3 class="fw-bold mb-3">Server Exception</h3>
-    <p class="text-muted mb-4">Something went wrong on our server. Our team has been notified.</p>
-    <a href="{{ url_for('shop.home') }}" class="btn btn-avyro btn-avyro-accent px-4 py-3">Back to Safety</a>
+  <div class="max-w-600 mx-auto card border-0 shadow-sm radius-xl p-5 bg-white">
+    <h1 class="display-1 font-serif fw-bold text-danger">500</h1>
+    <h3 class="font-serif fw-bold mb-3">Internal Server Exception</h3>
+    <p class="text-muted mb-4">Something went wrong processing your request. Please try again or return to the storefront.</p>
+    <div>
+      <a href="{{ url_for('shop.home') }}" class="btn btn-avyro btn-avyro-maroon px-4 py-3">RETURN TO HOMEPAGE &rarr;</a>
+    </div>
   </div>
 </div>
 {% endblock %}

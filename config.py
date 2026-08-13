@@ -15,13 +15,13 @@ class Config:
     if db_url and db_url.startswith("postgresql://") and "postgresql+pg8000://" not in db_url:
         db_url = db_url.replace("postgresql://", "postgresql+pg8000://", 1)
 
-    # On Vercel, ignore localhost / 127.0.0.1 database URLs because cloud functions cannot reach local laptops
-    if os.environ.get('VERCEL') and db_url and ('localhost' in db_url or '127.0.0.1' in db_url):
+    # On Vercel or cloud environments, ignore localhost / 127.0.0.1 database URLs
+    if (os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV')) and db_url and ('localhost' in db_url or '127.0.0.1' in db_url):
         db_url = None
 
     if db_url:
         SQLALCHEMY_DATABASE_URI = db_url
-    elif os.environ.get('VERCEL'):
+    elif os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV'):
         # Vercel serverless environment uses /tmp for writeable SQLite fallback
         SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/avyro.db'
     else:
@@ -29,7 +29,7 @@ class Config:
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    if os.environ.get('VERCEL'):
+    if os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV'):
         UPLOAD_FOLDER = '/tmp/uploads'
     else:
         UPLOAD_FOLDER = os.path.join(BASE_DIR, 'app', 'static', 'uploads')
