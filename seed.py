@@ -24,7 +24,7 @@ def download_or_create_placeholder(url, filepath):
 
 def seed_database():
     with app.app_context():
-        print("Safely re-creating database schema with parent_id support...")
+        print("Safely re-creating database schema with Home & Kitchen catalog...")
         db.drop_all()
         db.create_all()
 
@@ -54,13 +54,18 @@ def seed_database():
             'prod-hooks-1.jpg': 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=800&auto=format&fit=crop&q=80',
             'prod-cups-1.jpg': 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&auto=format&fit=crop&q=80',
             'prod-fridgeracks-1.jpg': 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&auto=format&fit=crop&q=80',
+            'prod-toothbrushholder-1.jpg': 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&auto=format&fit=crop&q=80',
+            'prod-hangers-1.jpg': 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=800&auto=format&fit=crop&q=80',
+            'prod-brassdiya-1.jpg': 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=800&auto=format&fit=crop&q=80',
+            'prod-lunchbox-1.jpg': 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800&auto=format&fit=crop&q=80',
+            'prod-stepstool-1.jpg': 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=800&auto=format&fit=crop&q=80',
         }
 
         for img_name, img_url in sample_images.items():
             download_or_create_placeholder(img_url, os.path.join(uploads_dir, img_name))
 
-        # Clear existing categories and products safely
-        print("Clearing old categories and products...")
+        # Clear existing tables safely
+        print("Clearing database tables...")
         db.session.query(OrderItem).delete()
         db.session.query(Order).delete()
         db.session.query(CartItem).delete()
@@ -183,8 +188,6 @@ def seed_database():
             }
         ]
 
-        created_sub_map = {}
-
         for main in hk_structure:
             parent_cat = Category(
                 name=main["name"],
@@ -198,7 +201,6 @@ def seed_database():
 
             for sub_name in main["subs"]:
                 sub_slug = Category.generate_slug(sub_name)
-                # Check if subcategory slug already created
                 if Category.query.filter_by(slug=sub_slug).first():
                     sub_slug = f"{sub_slug}-{parent_cat.id}"
                 
@@ -210,18 +212,15 @@ def seed_database():
                     status=True
                 )
                 db.session.add(sub_cat)
-                db.session.flush()
-                created_sub_map[sub_name] = sub_cat.id
 
         db.session.commit()
         print("Home & Kitchen category structure created successfully!")
 
-        # Helper to pick category ID
         def get_cat(name):
             cat = Category.query.filter_by(name=name).first()
             return cat.id if cat else 1
 
-        # Seed Home & Kitchen Products
+        # Seed 15 Complete Home & Kitchen Products
         products_data = [
             {
                 "name": "AVYRO Stainless Steel Oil Dispenser & Sprayer (1000ml)",
@@ -241,7 +240,7 @@ def seed_database():
                 "images": ["prod-oildispenser-1.jpg"]
             },
             {
-                "name": "AVYRO 360° Rotating Spice & Masala Rack (16 Jars)",
+                "name": "AVYRO 360° Rotating Spice & Masala Rack (16 Glass Jars)",
                 "slug": "avyro-360-rotating-spice-rack-16-jars",
                 "sku": "AVY-HK-002",
                 "description": "Revolving 16-piece spice organizer tower crafted from unbreakable BPA-free ABS plastic with chrome lids. Includes 3-option shaker lids for coarse and fine Indian masalas.",
@@ -326,7 +325,7 @@ def seed_database():
                 "images": ["prod-mopbucket-1.jpg"]
             },
             {
-                "name": "AVYRO Double-Wall Vacuum Insulated Flask Bottle (1000ml)",
+                "name": "AVYRO Double-Wall Vacuum Insulated Thermo Flask Bottle (1000ml)",
                 "slug": "avyro-vacuum-insulated-flask-bottle-1000ml",
                 "sku": "AVY-HK-007",
                 "description": "18/8 stainless steel thermo flask keeps beverages hot for 18 hours or cold for 24 hours. Sweat-free powder-coated exterior with leak-proof cap.",
@@ -360,7 +359,7 @@ def seed_database():
                 "images": ["prod-hooks-1.jpg"]
             },
             {
-                "name": "AVYRO Artisanal Ceramic Chai & Coffee Cups (Set of 6)",
+                "name": "AVYRO Artisanal Glazed Ceramic Chai & Coffee Cups (Set of 6)",
                 "slug": "avyro-artisanal-ceramic-chai-cups-set-of-6",
                 "sku": "AVY-HK-009",
                 "description": "Handcrafted terracotta glazed ceramic tea cups (180ml). Microwave and dishwasher safe, featuring traditional Indian studio pottery craftsmanship.",
@@ -392,6 +391,91 @@ def seed_database():
                 "featured": False,
                 "bestseller": True,
                 "images": ["prod-fridgeracks-1.jpg"]
+            },
+            {
+                "name": "AVYRO Wall-Mounted Automatic Toothbrush & Dispenser Holder",
+                "slug": "avyro-wall-mounted-toothbrush-dispenser-holder",
+                "sku": "AVY-HK-011",
+                "description": "Wall-mounted bathroom organizer with automatic toothpaste squeezer, 4 toothbrush slots, and 2 magnetic mouthwash cups.",
+                "short_description": "All-in-one bathroom organizer with automatic toothpaste dispenser.",
+                "price": 699.0,
+                "sale_price": 449.0,
+                "stock": 35,
+                "category_id": get_cat("Toothbrush Holders"),
+                "brand": "AVYRO Home",
+                "weight": "410g",
+                "dimensions": "26 x 10 x 12 cm",
+                "featured": False,
+                "bestseller": True,
+                "images": ["prod-toothbrushholder-1.jpg"]
+            },
+            {
+                "name": "AVYRO 5-Tier Space-Saving Wardrobe Cloth Hangers (Pack of 4)",
+                "slug": "avyro-5-tier-space-saving-wardrobe-hangers-4",
+                "sku": "AVY-HK-012",
+                "description": "Stainless steel non-slip S-shaped hangers holding 5 trousers or scarves each. Maximizes closet wardrobe space by 80%.",
+                "short_description": "5-tier non-slip stainless steel wardrobe organizer hangers.",
+                "price": 599.0,
+                "sale_price": 399.0,
+                "stock": 50,
+                "category_id": get_cat("Hangers"),
+                "brand": "AVYRO Home",
+                "weight": "680g",
+                "dimensions": "36 x 34 cm",
+                "featured": False,
+                "bestseller": False,
+                "images": ["prod-hangers-1.jpg"]
+            },
+            {
+                "name": "AVYRO Handcrafted Antique Brass Table Diya & Candle Holder",
+                "slug": "avyro-handcrafted-brass-table-diya-candle-holder",
+                "sku": "AVY-HK-013",
+                "description": "Solid brass decorative oil lamp oil diya with floral filigree work. Perfect for festive home decor, living room tables, and gifting.",
+                "short_description": "Handcrafted antique brass oil diya and candle holder for home decor.",
+                "price": 1299.0,
+                "sale_price": 899.0,
+                "stock": 20,
+                "category_id": get_cat("Table Decor"),
+                "brand": "AVYRO Home",
+                "weight": "420g",
+                "dimensions": "15 x 12 x 12 cm",
+                "featured": True,
+                "bestseller": False,
+                "images": ["prod-brassdiya-1.jpg"]
+            },
+            {
+                "name": "AVYRO Stainless Steel Insulated Executive Lunch Box (4 Containers)",
+                "slug": "avyro-insulated-executive-lunch-box-4-containers",
+                "sku": "AVY-HK-014",
+                "description": "4-tier leak-proof stainless steel lunch box set with insulated fabric jacket bag and spoon. Keeps chapatis and curry warm for hours.",
+                "short_description": "4-container insulated lunch box set with carrying bag.",
+                "price": 1499.0,
+                "sale_price": 999.0,
+                "stock": 25,
+                "category_id": get_cat("Lunch Boxes"),
+                "brand": "AVYRO Home",
+                "weight": "850g",
+                "dimensions": "22 x 15 x 15 cm",
+                "featured": True,
+                "bestseller": True,
+                "images": ["prod-lunchbox-1.jpg"]
+            },
+            {
+                "name": "AVYRO Multipurpose Space Saving Folding Step Stool",
+                "slug": "avyro-multipurpose-folding-step-stool",
+                "sku": "AVY-HK-015",
+                "description": "Heavy-duty foldable step stool supporting up to 100kg. Anti-skid surface dots and rubber feet for kitchen reach, bathroom, and home utility.",
+                "short_description": "Foldable non-slip step stool holding up to 100kg.",
+                "price": 999.0,
+                "sale_price": 699.0,
+                "stock": 30,
+                "category_id": get_cat("Space Saving Products"),
+                "brand": "AVYRO Home",
+                "weight": "920g",
+                "dimensions": "29 x 22 x 22 cm",
+                "featured": False,
+                "bestseller": True,
+                "images": ["prod-stepstool-1.jpg"]
             }
         ]
 
@@ -405,7 +489,7 @@ def seed_database():
                 pimg = ProductImage(product_id=prod.id, image_path=img_file, sort_order=idx)
                 db.session.add(pimg)
 
-        # Seed Admin & Demo Customer
+        # Seed Admin & Customer accounts
         if not User.query.filter_by(email='admin@avyro.com').first():
             admin = User(name='AVYRO Administrator', email='admin@avyro.com', is_admin=True)
             admin.set_password('Admin@123')
@@ -419,12 +503,12 @@ def seed_database():
         db.session.commit()
 
         print("==================================================")
-        print("  AVYRO Seed Complete!")
-        print("  Category Structure: Home & Kitchen Marketplace")
+        print("  AVYRO Home & Kitchen Catalog Seeded!")
+        print("  Database: SQLite & PostgreSQL")
         print("  Admin Login: admin@avyro.com / Admin@123")
         print("  Customer Login: user@avyro.com / User@123")
-        print(f"  Main Categories Seeded: {len(hk_structure)}")
-        print(f"  Products Seeded: {len(products_data)}")
+        print(f"  Main Categories: {len(hk_structure)}")
+        print(f"  Total Products: {len(products_data)}")
         print("==================================================")
 
 if __name__ == '__main__':
