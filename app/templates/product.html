@@ -23,15 +23,15 @@
     <!-- Image Gallery Column -->
     <div class="col-lg-6">
       <div class="product-gallery-main">
-        <img id="mainGalleryImage" src="{{ url_for('static', filename='uploads/' + product.main_image) }}" alt="{{ product.name }}" onerror="this.src='https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800'">
+        <img id="mainGalleryImage" src="{{ product.main_image | img_url }}" alt="{{ product.name }}" onerror="this.src='https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800'">
       </div>
 
       <!-- Multi-image Thumbnails -->
       {% if product.images|length > 1 %}
       <div class="thumbnail-slider">
         {% for img in product.images %}
-        <div class="thumb-item {% if loop.first %}active{% endif %}" data-src="{{ url_for('static', filename='uploads/' + img.image_path) }}">
-          <img src="{{ url_for('static', filename='uploads/' + img.image_path) }}" alt="{{ product.name }}" onerror="this.src='https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200'">
+        <div class="thumb-item {% if loop.first %}active{% endif %}" data-src="{{ img.image_path | img_url }}">
+          <img src="{{ img.image_path | img_url }}" alt="{{ product.name }}" onerror="this.src='https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200'">
         </div>
         {% endfor %}
       </div>
@@ -240,7 +240,7 @@
         <div class="product-card">
           <div class="product-card-img-wrap">
             <a href="{{ url_for('shop.product_detail', slug=rel.slug) }}">
-              <img src="{{ url_for('static', filename='uploads/' + rel.main_image) }}" alt="{{ rel.name }}" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'">
+              <img src="{{ rel.main_image | img_url }}" alt="{{ rel.name }}" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'">
             </a>
           </div>
           <div class="product-card-body">

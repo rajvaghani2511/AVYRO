@@ -69,6 +69,14 @@ def create_app(config_class=Config):
         except (ValueError, TypeError):
             return "₹0.00"
 
+    @app.template_filter('img_url')
+    def img_url_filter(filename):
+        if not filename:
+            return 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800'
+        if filename.startswith('http://') or filename.startswith('https://'):
+            return filename
+        return f"/static/uploads/{filename}"
+
     # Custom Error Handlers
     @app.errorhandler(404)
     def page_not_found(e):

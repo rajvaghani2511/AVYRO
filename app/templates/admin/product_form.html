@@ -93,7 +93,7 @@
           {% for img in product.images %}
           <div class="col-4 col-md-3">
             <div class="border rounded p-1 position-relative bg-light">
-              <img src="{{ url_for('static', filename='uploads/' + img.image_path) }}" class="rounded w-100" style="height: 100px; object-fit: cover;">
+              <img src="{{ img.image_path | img_url }}" class="rounded w-100" style="height: 100px; object-fit: cover;">
               <form action="{{ url_for('admin.delete_product_image', image_id=img.id) }}" method="POST" class="position-absolute top-0 end-0 m-1">
                 <button type="submit" class="btn btn-sm btn-danger py-0 px-1 extra-small radius-pill" title="Delete Image">&times;</button>
               </form>

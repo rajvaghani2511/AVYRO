@@ -51,7 +51,7 @@
             <tr>
               <td>
                 <div class="d-flex align-items-center gap-3">
-                  <img src="{{ url_for('static', filename='uploads/' + cat.image) }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100'">
+                  <img src="{{ cat.image | img_url }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100'">
                   <div>
                     <strong class="d-block font-serif text-dark fs-6">{{ cat.name }}</strong>
                     <span class="text-muted extra-small">{{ cat.description or 'No description' }}</span>

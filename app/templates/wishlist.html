@@ -22,7 +22,7 @@
             <i class="bi bi-heart-fill text-danger"></i>
           </button>
           <a href="{{ url_for('shop.product_detail', slug=product.slug) }}">
-            <img src="{{ url_for('static', filename='uploads/' + product.main_image) }}" alt="{{ product.name }}" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'">
+            <img src="{{ product.main_image | img_url }}" alt="{{ product.name }}" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'">
           </a>
         </div>
         <div class="product-card-body">

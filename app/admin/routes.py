@@ -28,6 +28,17 @@ def save_upload_image(file):
     if ext not in current_app.config['ALLOWED_EXTENSIONS']:
         return None
 
+    # Check Cloudinary configuration
+    if os.environ.get('CLOUDINARY_URL'):
+        try:
+            import cloudinary
+            import cloudinary.uploader
+            result = cloudinary.uploader.upload(file, folder="avyro_uploads")
+            if result and 'secure_url' in result:
+                return result['secure_url']
+        except Exception as e:
+            print(f"Cloudinary upload fallback to local storage: {e}")
+
     filename = f"{uuid.uuid4().hex[:12]}_{secure_filename(file.filename)}"
     filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)

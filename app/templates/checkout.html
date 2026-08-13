@@ -104,7 +104,7 @@
             {% for item in cart.items %}
             <div class="d-flex align-items-center justify-content-between gap-3">
               <div class="d-flex align-items-center gap-3">
-                <img src="{{ url_for('static', filename='uploads/' + item.product.main_image) }}" class="rounded" style="width: 50px; height: 50px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100'">
+                <img src="{{ item.product.main_image | img_url }}" class="rounded" style="width: 50px; height: 50px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100'">
                 <div>
                   <div class="fw-bold font-serif small text-dark text-truncate" style="max-width: 180px;">{{ item.product.name }}</div>
                   <span class="text-muted extra-small">Qty: {{ item.quantity }} &times; {{ item.product.effective_price | currency }}</span>

@@ -45,7 +45,7 @@
         <tr>
           <td>
             <div class="d-flex align-items-center gap-3">
-              <img src="{{ url_for('static', filename='uploads/' + p.main_image) }}" class="rounded" style="width: 44px; height: 44px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100'">
+              <img src="{{ p.main_image | img_url }}" class="rounded" style="width: 44px; height: 44px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100'">
               <div>
                 <a href="{{ url_for('admin.edit_product', id=p.id) }}" class="fw-bold font-serif text-dark text-decoration-none d-block">{{ p.name }}</a>
                 <span class="text-muted extra-small">{{ p.brand or 'AVYRO' }}</span>
