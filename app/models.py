@@ -73,9 +73,9 @@ class PhoneOTP(db.Model):
         hashed = generate_password_hash(raw_otp)
         expires = now + timedelta(minutes=5)
 
-        # Dispatch real SMS first
-        from app.utils_auth import send_real_sms_otp
-        sent_ok, sms_msg = send_real_sms_otp(formatted_phone, raw_otp)
+        # Dispatch real SMS via Twilio Verify v2 API
+        from app.utils_auth import send_twilio_verify_otp
+        sent_ok, sms_msg = send_twilio_verify_otp(formatted_phone)
 
         if not sent_ok:
             # DO NOT create database record if SMS dispatch failed or provider unconfigured
@@ -84,9 +84,10 @@ class PhoneOTP(db.Model):
         # Delete any previous unverified OTP records and save new record
         cls.query.filter_by(phone=formatted_phone, verified=False).delete()
 
+        expires = now + timedelta(minutes=5)
         otp_record = cls(
             phone=formatted_phone,
-            otp_hash=hashed,
+            otp_hash="TWILIO_VERIFY",
             expires_at=expires,
             verified=False
         )
@@ -103,16 +104,16 @@ class PhoneOTP(db.Model):
         formatted_phone = f"+91 {clean_phone}"
 
         clean_otp = re.sub(r'[^0-9]', '', str(input_otp))
-        if len(clean_otp) != 6:
-            return False, "OTP must be exactly 6 digits."
+        if not clean_otp:
+            return False, "Please enter the OTP code received via SMS."
 
         otp_record = cls.query.filter_by(phone=formatted_phone, verified=False).order_by(cls.created_at.desc()).first()
         if not otp_record:
-            return False, "No active OTP found. Please request a new OTP."
+            return False, "No active OTP request found. Please request a new OTP."
 
         now = datetime.utcnow()
         if now > otp_record.expires_at:
-            return False, "OTP has expired. Please request a new OTP."
+            return False, "OTP session has expired. Please request a new OTP."
 
         if otp_record.attempts >= 5:
             return False, "Maximum verification attempts exceeded. Please request a new OTP."
@@ -120,13 +121,17 @@ class PhoneOTP(db.Model):
         otp_record.attempts += 1
         db.session.commit()
 
-        if check_password_hash(otp_record.otp_hash, clean_otp):
+        # Verify via official Twilio Verify v2 VerificationCheck API
+        from app.utils_auth import check_twilio_verify_otp
+        verified_ok, verify_msg = check_twilio_verify_otp(formatted_phone, clean_otp)
+
+        if verified_ok:
             otp_record.verified = True
             db.session.commit()
             return True, "OTP verified successfully!"
         else:
-            remaining_attempts = 5 - otp_record.attempts
-            return False, f"Incorrect OTP code. {remaining_attempts} attempts remaining."
+            return False, verify_msg
+
 
 
 class Category(db.Model):
