@@ -71,7 +71,7 @@ class PhoneOTP(db.Model):
         import secrets
         raw_otp = f"{secrets.randbelow(900000) + 100000}"
         hashed = generate_password_hash(raw_otp)
-        expires = now + timedelta(minutes=10)
+        expires = now + timedelta(minutes=5)
 
         # Dispatch real SMS first
         from app.utils_auth import send_real_sms_otp

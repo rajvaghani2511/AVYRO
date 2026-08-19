@@ -8,8 +8,8 @@ from flask import url_for, session, redirect, current_app
 def send_real_sms_otp(phone, otp):
     """
     Real SMS OTP Dispatch Handler.
-    Requires FAST2SMS_API_KEY (for Indian +91 numbers) or Twilio credentials.
-    Returns (True, message) on success, or (False, error_message) on failure/unconfigured.
+    Supports Twilio SMS and Fast2SMS API.
+    Returns (True, success_message) or (False, error_message).
     """
     twilio_sid = os.environ.get('TWILIO_ACCOUNT_SID')
     twilio_token = os.environ.get('TWILIO_AUTH_TOKEN')
@@ -20,7 +20,45 @@ def send_real_sms_otp(phone, otp):
     if clean_digits.startswith('91') and len(clean_digits) == 12:
         clean_digits = clean_digits[2:]
 
-    # 1. Try Fast2SMS (Primary provider for Indian +91 mobile numbers)
+    # 1. Twilio SMS Integration
+    if twilio_sid and twilio_token and twilio_phone:
+        try:
+            import base64
+            auth_header = "Basic " + base64.b64encode(f"{twilio_sid}:{twilio_token}".encode('utf-8')).decode('utf-8')
+            payload = urllib.parse.urlencode({
+                'From': twilio_phone,
+                'To': f'+91{clean_digits}',
+                'Body': f'Your AVYRO verification OTP is: {otp}. Valid for 5 minutes. Do not share this code with anyone.'
+            }).encode('utf-8')
+
+            req = urllib.request.Request(
+                f"https://api.twilio.com/2010-04-01/Accounts/{twilio_sid}/Messages.json",
+                data=payload,
+                headers={
+                    'Authorization': auth_header,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=10) as response:
+                res_data = json.loads(response.read().decode('utf-8'))
+                if res_data.get('sid'):
+                    return True, f"SMS OTP delivered via Twilio (SID: {res_data['sid']})."
+                else:
+                    return False, "Twilio SMS dispatch declined."
+        except urllib.error.HTTPError as e:
+            try:
+                err_body = json.loads(e.read().decode('utf-8'))
+                err_msg = err_body.get('message') or f"HTTP Error {e.code}"
+            except Exception:
+                err_msg = f"HTTP Error {e.code}"
+            print(f"[SMS ERROR] Twilio HTTP error: {err_msg}")
+            return False, f"Twilio SMS Delivery Error: {err_msg}"
+        except Exception as e:
+            print(f"[SMS ERROR] Twilio exception: {e}")
+            return False, f"Twilio SMS Error: {str(e)}"
+
+    # 2. Fast2SMS Integration
     if fast2sms_key:
         try:
             url = "https://www.fast2sms.com/dev/bulkV2"
@@ -49,27 +87,15 @@ def send_real_sms_otp(phone, otp):
             print(f"[SMS ERROR] Fast2SMS exception: {e}")
             return False, f"SMS service network error: {str(e)}"
 
-    # 2. Try Twilio (Global SMS provider)
-    if twilio_sid and twilio_token and twilio_phone:
-        try:
-            from twilio.rest import Client
-            client = Client(twilio_sid, twilio_token)
-            msg = client.messages.create(
-                body=f"Your AVYRO verification OTP is: {otp}. Valid for 10 minutes. Do not share this code with anyone.",
-                from_=twilio_phone,
-                to=f"+91{clean_digits}"
-            )
-            return True, f"SMS OTP delivered via Twilio (SID: {msg.sid})."
-        except ImportError:
-            print("[SMS ERROR] Twilio package not installed. Add 'twilio' to requirements.txt.")
-            return False, "Twilio SMS library missing on server."
-        except Exception as e:
-            print(f"[SMS ERROR] Twilio exception: {e}")
-            return False, f"Twilio SMS Delivery Error: {str(e)}"
+    # 3. Missing Credentials Reporting
+    missing = []
+    if not twilio_sid: missing.append('TWILIO_ACCOUNT_SID')
+    if not twilio_token: missing.append('TWILIO_AUTH_TOKEN')
+    if not twilio_phone: missing.append('TWILIO_PHONE_NUMBER')
+    missing_str = ", ".join(missing)
 
-    # 3. No SMS Provider Configured
-    print(f"[SMS SECURITY WARN] OTP request for {phone} rejected because no SMS provider (FAST2SMS_API_KEY or Twilio) is configured.")
-    return False, "OTP service is not configured. Please try again later."
+    print(f"[SMS SECURITY WARN] OTP request for {phone} rejected because SMS credentials are missing: {missing_str}")
+    return False, f"OTP service is not configured. Missing environment variables: {missing_str}"
 
 
 def get_google_auth_url(next_url=None):
