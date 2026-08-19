@@ -73,6 +73,15 @@ class PhoneOTP(db.Model):
         hashed = generate_password_hash(raw_otp)
         expires = now + timedelta(minutes=10)
 
+        # Dispatch real SMS first
+        from app.utils_auth import send_real_sms_otp
+        sent_ok, sms_msg = send_real_sms_otp(formatted_phone, raw_otp)
+
+        if not sent_ok:
+            # DO NOT create database record if SMS dispatch failed or provider unconfigured
+            return False, sms_msg, 0
+
+        # Delete any previous unverified OTP records and save new record
         cls.query.filter_by(phone=formatted_phone, verified=False).delete()
 
         otp_record = cls(
@@ -83,11 +92,6 @@ class PhoneOTP(db.Model):
         )
         db.session.add(otp_record)
         db.session.commit()
-
-        # Send Real SMS via API provider if configured
-        import os
-        from app.utils_auth import send_real_sms_otp
-        send_real_sms_otp(formatted_phone, raw_otp)
 
         return True, f"OTP sent successfully to {formatted_phone}.", 60
 

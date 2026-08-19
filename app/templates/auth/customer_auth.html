@@ -219,6 +219,14 @@ function requestOtp(mode) {
   const btn = mode === 'login' ? document.getElementById('loginSendOtpBtn') : document.getElementById('regSendOtpBtn');
   const rawPhone = phoneInput.value.replace(/[^0-9]/g, '');
 
+  if (mode !== 'login') {
+    const nameInput = document.getElementById('regName');
+    if (!nameInput || !nameInput.value.trim()) {
+      showAlert('Please enter your Full Name before requesting an OTP.', 'danger');
+      return;
+    }
+  }
+
   if (rawPhone.length !== 10 || !/^[6-9][0-9]{9}$/.test(rawPhone)) {
     showAlert('Please enter a valid 10-digit Indian mobile number.', 'danger');
     return;
@@ -232,30 +240,38 @@ function requestOtp(mode) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ phone: rawPhone, mode: mode })
   })
-  .then(res => res.json().then(data => ({ status: res.status, body: data })))
-  .then(res => {
+  .then(async response => {
+    let data;
+    try {
+      data = await response.json();
+    } catch(e) {
+      data = { success: false, message: 'Server response error. Please try again later.' };
+    }
     btn.disabled = false;
     btn.innerHTML = mode === 'login' ? 'GET OTP &rarr;' : 'GET VERIFICATION OTP &rarr;';
     
-    if (res.body.success) {
-      showAlert(res.body.message, 'success');
+    if (response.ok && data.success) {
+      showAlert(data.message, 'success');
       if (mode === 'login') {
         document.getElementById('loginPhoneDisplay').innerText = `+91 ${rawPhone}`;
         document.getElementById('loginStepOtp').classList.remove('d-none');
-        startCooldownTimer('login', res.body.cooldown || 60);
+        startCooldownTimer('login', data.cooldown || 60);
       } else {
         document.getElementById('regPhoneDisplay').innerText = `+91 ${rawPhone}`;
         document.getElementById('regStepOtp').classList.remove('d-none');
-        startCooldownTimer('register', res.body.cooldown || 60);
+        startCooldownTimer('register', data.cooldown || 60);
       }
     } else {
-      showAlert(res.body.message || 'Error sending OTP', 'danger');
+      showAlert(data.message || 'Unable to send OTP. Please try again later.', 'danger');
+      if (data.cooldown) {
+        startCooldownTimer(mode === 'login' ? 'login' : 'register', data.cooldown);
+      }
     }
   })
   .catch(err => {
     btn.disabled = false;
     btn.innerHTML = mode === 'login' ? 'GET OTP &rarr;' : 'GET VERIFICATION OTP &rarr;';
-    showAlert('Network error. Please try again.', 'danger');
+    showAlert('Unable to connect to service. Please try again later.', 'danger');
   });
 }
 
@@ -268,6 +284,11 @@ function verifyOtp(mode) {
 
   const rawPhone = phoneInput.value.replace(/[^0-9]/g, '');
   const otpCode = otpInput.value.replace(/[^0-9]/g, '');
+
+  if (mode === 'create_account' && (!nameInput || !nameInput.value.trim())) {
+    showAlert('Please enter your Full Name.', 'danger');
+    return;
+  }
 
   if (rawPhone.length !== 10) {
     showAlert('Please enter a valid 10-digit mobile number.', 'danger');
@@ -288,27 +309,32 @@ function verifyOtp(mode) {
       phone: rawPhone,
       otp: otpCode,
       mode: mode,
-      name: mode === 'create_account' ? nameInput.value : '',
+      name: mode === 'create_account' ? nameInput.value.trim() : '',
       next_url: nextUrl
     })
   })
-  .then(res => res.json().then(data => ({ status: res.status, body: data })))
-  .then(res => {
-    if (res.body.success) {
-      showAlert(res.body.message, 'success');
+  .then(async response => {
+    let data;
+    try {
+      data = await response.json();
+    } catch(e) {
+      data = { success: false, message: 'Verification server response error.' };
+    }
+    if (response.ok && data.success) {
+      showAlert(data.message, 'success');
       setTimeout(() => {
-        window.location.href = res.body.redirect_url || '/account';
+        window.location.href = data.redirect_url || '/account';
       }, 500);
     } else {
       btn.disabled = false;
       btn.innerHTML = mode === 'login' ? 'VERIFY & LOGIN &rarr;' : 'VERIFY & CREATE ACCOUNT &rarr;';
-      showAlert(res.body.message || 'Verification failed.', 'danger');
+      showAlert(data.message || 'Verification failed. Please try again.', 'danger');
     }
   })
   .catch(err => {
     btn.disabled = false;
     btn.innerHTML = mode === 'login' ? 'VERIFY & LOGIN &rarr;' : 'VERIFY & CREATE ACCOUNT &rarr;';
-    showAlert('Network error. Please try again.', 'danger');
+    showAlert('Connection error during verification. Please try again.', 'danger');
   });
 }
 
